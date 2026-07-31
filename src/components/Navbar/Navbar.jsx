@@ -1,54 +1,173 @@
-import { FaSearch, FaHeart, FaShoppingCart, FaMapMarkerAlt, FaUser } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import {
+  FaHeart,
+  FaShoppingCart,
+  FaUser,
+  FaMapMarkerAlt,
+  FaSignOutAlt
+} from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+
+import { useContext } from "react";
+import { CartContext } from "../../context/CartContext";
+
 import "./Navbar.css";
 
 function Navbar() {
+
+  const { cartItems } = useContext(CartContext);
+
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+
+  }, []);
+
+  const handleLogout = () => {
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    setUser(null);
+
+    navigate("/login");
+  };
+
   return (
+
     <nav className="navbar">
 
-      <div className="navbar-logo">
-        <span>🏠</span>
-        HOMEKART
-      </div>
+      {/* Logo */}
 
-      <div className="delivery-location">
-        <FaMapMarkerAlt />
-        <div>
-          <small>Deliver to</small>
-          <strong>Select Location</strong>
-        </div>
-      </div>
+      <Link to="/" className="navbar-logo">
+        🏠 HOMEKART
+      </Link>
 
-      <div className="search-container">
+
+      {/* Search */}
+
+      <div className="search-box">
+
         <input
           type="text"
-          placeholder="Search for chilli powder, rice, oil..."
+          placeholder="Search household products..."
         />
+
         <button>
-          <FaSearch />
+          Search
         </button>
+
       </div>
 
-      <div className="navbar-actions">
 
-        <div className="nav-item">
+      {/* Location */}
+
+      <div className="navbar-location">
+
+        <FaMapMarkerAlt />
+
+        <div>
+          <small>Deliver to</small>
+          <strong>India</strong>
+        </div>
+
+      </div>
+
+
+      {/* User */}
+
+      {user ? (
+
+        <div className="navbar-user">
+
           <FaUser />
-          <span>Login</span>
+
+          <div>
+            <small>Hello,</small>
+
+            <strong>
+              {user.name}
+            </strong>
+          </div>
+
         </div>
 
-        <div className="nav-item">
-          <FaHeart />
-          <span>Wishlist</span>
-        </div>
+      ) : (
 
-        <div className="nav-item cart">
-          <FaShoppingCart />
-          <span>Cart</span>
-          <b>0</b>
-        </div>
+        <Link
+          to="/login"
+          className="navbar-login"
+        >
 
-      </div>
+          <FaUser />
+
+          <div>
+            <small>Hello,</small>
+            <strong>Login</strong>
+          </div>
+
+        </Link>
+
+      )}
+
+
+      {/* Wishlist */}
+
+      <Link
+        to="/wishlist"
+        className="navbar-icon"
+      >
+
+        <FaHeart />
+
+        <span>Wishlist</span>
+
+      </Link>
+
+
+      {/* Cart */}
+
+      <Link
+        to="/cart"
+        className="navbar-cart"
+      >
+
+        <FaShoppingCart />
+
+        <span>
+          Cart ({cartItems.length})
+        </span>
+
+      </Link>
+
+
+      {/* Logout */}
+
+      {user && (
+
+        <button
+          className="logout-button"
+          onClick={handleLogout}
+        >
+
+          <FaSignOutAlt />
+
+          Logout
+
+        </button>
+
+      )}
 
     </nav>
+
   );
 }
 
