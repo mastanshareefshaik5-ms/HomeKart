@@ -1,0 +1,52 @@
+.offer-banner{
+
+    width:100%;
+    padding:50px 20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#fff3e6;
+
+}
+
+
+.offer-content{
+
+    text-align:center;
+}
+
+
+.offer-content h1{
+
+    font-size:40px;
+    color:#ff6b00;
+
+}
+
+
+.offer-content p{
+
+    font-size:18px;
+    margin:20px 0;
+
+}
+
+
+.offer-content button{
+
+    padding:12px 30px;
+    border:none;
+    border-radius:8px;
+    background:#ff6b00;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+
+}
+
+
+.offer-content button:hover{
+
+    background:#e65c00;
+
+}

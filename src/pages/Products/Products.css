@@ -1,0 +1,30 @@
+.products-section {
+    padding: 40px 50px;
+    background: #f5f5f5;
+}
+
+.products-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.products-header h2 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.products-header p {
+    color: #666;
+}
+
+.products-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
+
+    gap: 25px;
+
+    max-width: 1400px;
+    margin: auto;
+}

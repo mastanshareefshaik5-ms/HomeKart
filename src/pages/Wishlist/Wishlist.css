@@ -1,0 +1,39 @@
+.wishlist-page{
+
+padding:40px;
+min-height:70vh;
+background:#f7f7f7;
+
+}
+
+
+.wishlist-page h1{
+
+text-align:center;
+color:#ff6b00;
+
+}
+
+
+.wishlist-card{
+
+background:white;
+max-width:350px;
+margin:30px auto;
+padding:25px;
+text-align:center;
+border-radius:15px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+
+}
+
+
+.wishlist-card button{
+
+background:#ff6b00;
+color:white;
+border:none;
+padding:12px 25px;
+border-radius:8px;
+
+}
