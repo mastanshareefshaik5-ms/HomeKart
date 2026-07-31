@@ -1,100 +1,137 @@
-import "./Cart.css";
 import { useContext } from "react";
+import { FaTrash } from "react-icons/fa";
 import { CartContext } from "../../context/CartContext";
-import { Link } from "react-router-dom";
+import "./Cart.css";
 
+function Cart() {
+  const {
+    cartItems,
+    removeFromCart,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useContext(CartContext);
 
-function Cart(){
+  const totalPrice = cartItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
-const {cartItems, removeFromCart} = useContext(CartContext);
+  if (cartItems.length === 0) {
+    return (
+      <div className="empty-cart">
+        <div className="empty-cart-icon">🛒</div>
+        <h2>Your Cart is Empty</h2>
+        <p>Add some household products to your cart.</p>
+      </div>
+    );
+  }
 
+  return (
+    <div className="cart-page">
 
-return(
+      <div className="cart-container">
 
-<div className="cart-page">
+        <div className="cart-products">
 
+          <h2>Shopping Cart</h2>
 
-<h1>
-🛒 Your Cart
-</h1>
+          {cartItems.map((item) => (
+            <div className="cart-item" key={item.id}>
 
+              <div className="cart-product-image">
+                {item.icon}
+              </div>
 
-{
-cartItems.length === 0 ? (
+              <div className="cart-product-details">
 
-<h2 className="empty-cart">
-Your cart is empty
-</h2>
+                <h3>{item.name}</h3>
 
-)
+                <p>{item.description}</p>
 
-:
+                <strong>₹{item.price}</strong>
 
-(
+                <div className="quantity-controls">
 
-<div className="cart-box">
+                  <button
+                    onClick={() => decreaseQuantity(item.id)}
+                  >
+                    −
+                  </button>
 
-{
-cartItems.map((item,index)=>(
+                  <span>{item.quantity}</span>
 
-<div className="cart-item" key={index}>
+                  <button
+                    onClick={() => increaseQuantity(item.id)}
+                  >
+                    +
+                  </button>
 
+                </div>
 
-<h3>
-{item.name}
-</h3>
+              </div>
 
+              <div className="cart-item-right">
 
-<p>
-₹{item.price}
-</p>
+                <h3>
+                  ₹{item.price * item.quantity}
+                </h3>
 
+                <button
+                  className="remove-button"
+                  onClick={() => removeFromCart(item.id)}
+                >
+                  <FaTrash />
+                  Remove
+                </button>
 
-<button
-onClick={()=>removeFromCart(index)}
->
-Remove
-</button>
+              </div>
 
+            </div>
+          ))}
 
-</div>
+        </div>
 
-))
+        <div className="cart-summary">
+
+          <h2>Order Summary</h2>
+
+          <div className="summary-row">
+            <span>Items</span>
+            <span>
+              {cartItems.reduce(
+                (total, item) => total + item.quantity,
+                0
+              )}
+            </span>
+          </div>
+
+          <div className="summary-row">
+            <span>Subtotal</span>
+            <span>₹{totalPrice}</span>
+          </div>
+
+          <div className="summary-row">
+            <span>Delivery</span>
+            <span>FREE</span>
+          </div>
+
+          <hr />
+
+          <div className="summary-total">
+            <span>Total</span>
+            <strong>₹{totalPrice}</strong>
+          </div>
+
+          <button className="checkout-button">
+            Proceed to Checkout
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
 }
-
-
-<h2>
-Total: ₹
-{
-cartItems.reduce(
-(total,item)=>total+item.price,
-0
-)
-}
-</h2>
-
-
-<Link to="/checkout">
-
-<button className="checkout-btn">
-Proceed to Checkout
-</button>
-
-</Link>
-
-
-</div>
-
-)
-
-}
-
-
-</div>
-
-);
-
-}
-
 
 export default Cart;
