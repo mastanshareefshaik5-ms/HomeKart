@@ -1,53 +1,89 @@
+import { Link } from "react-router-dom";
 import "./Register.css";
+import axios from "axios";
+function Register() {
+  return (
+    <div className="auth-page">
 
-function Register(){
+      <div className="auth-card">
 
-return(
+        <div className="auth-logo">
+          🏠 HOMEKART
+        </div>
 
-<div className="register-container">
+        <h1>Create Account</h1>
 
+        <p className="auth-subtitle">
+          Create your HOMEKART account
+        </p>
 
-<div className="register-box">
+        <form>
 
+          <div className="form-group">
+            <label>Full Name</label>
 
-<h2>
-Create HOMEKART Account
-</h2>
+            <input
+              type="text"
+              placeholder="Enter your full name"
+            />
+          </div>
 
+          <div className="form-group">
+            <label>Email</label>
 
-<input 
-placeholder="Full Name"
-/>
+            <input
+              type="email"
+              placeholder="Enter your email"
+            />
+          </div>
 
+          <div className="form-group">
+            <label>Mobile Number</label>
 
-<input 
-placeholder="Email"
-/>
+            <input
+              type="tel"
+              placeholder="Enter your mobile number"
+            />
+          </div>
 
+          <div className="form-group">
+            <label>Password</label>
 
-<input 
-placeholder="Mobile Number"
-/>
+            <input
+              type="password"
+              placeholder="Create a password"
+            />
+          </div>
 
+          <div className="form-group">
+            <label>Confirm Password</label>
 
-<input 
-type="password"
-placeholder="Password"
-/>
+            <input
+              type="password"
+              placeholder="Confirm your password"
+            />
+          </div>
 
+          <button
+            type="submit"
+            className="auth-button"
+          >
+            Create Account
+          </button>
 
-<button>
-Register
-</button>
+        </form>
 
+        <p className="auth-switch">
+          Already have an account?{" "}
+          <Link to="/login">
+            Login
+          </Link>
+        </p>
 
-</div>
+      </div>
 
-
-</div>
-
-);
-
+    </div>
+  );
 }
 
 export default Register;
