@@ -1,71 +1,82 @@
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
+
 import Home from "./pages/Home/Home";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Cart from "./pages/Cart/Cart";
 import Wishlist from "./pages/Wishlist/Wishlist";
 import ProductDetails from "./pages/ProductDetails/ProductDetails";
-
-import { CartProvider } from "./context/CartContext";
 import Checkout from "./pages/Checkout/Checkout";
 import Products from "./pages/Products/Products";
 
+import { CartProvider } from "./context/CartContext";
+
 import {
-BrowserRouter,
-Routes,
-Route
+  BrowserRouter,
+  Routes,
+  Route
 } from "react-router-dom";
 
+function App() {
+  return (
+    <CartProvider>
 
-function App(){
+      <BrowserRouter>
 
+        <Navbar />
 
-return(
+        <Routes>
 
-<CartProvider>
+          <Route
+            path="/"
+            element={<Home />}
+          />
 
-<BrowserRouter>
+          <Route
+            path="/products"
+            element={<Products />}
+          />
 
+          <Route
+            path="/login"
+            element={<Login />}
+          />
 
-<Navbar />
+          <Route
+            path="/register"
+            element={<Register />}
+          />
 
-<Products />
+          <Route
+            path="/cart"
+            element={<Cart />}
+          />
 
-<Routes>
+          <Route
+            path="/wishlist"
+            element={<Wishlist />}
+          />
 
+          <Route
+            path="/product-details/:id"
+            element={<ProductDetails />}
+          />
+          
 
-<Route path="/" element={<Home/>}/>
+          <Route
+            path="/checkout"
+            element={<Checkout />}
+          />
 
-<Route path="/login" element={<Login/>}/>
+        </Routes>
 
-<Route path="/register" element={<Register/>}/>
+        <Footer />
 
-<Route path="/cart" element={<Cart/>}/>
+      </BrowserRouter>
 
-<Route path="/wishlist" element={<Wishlist/>}/>
-
-<Route path="/product-details" element={<ProductDetails/>}/>
-<Route
-  path="/checkout"
-  element={<Checkout/>}
-/>
-
-
-</Routes>
-
-
-<Footer />
-
-
-</BrowserRouter>
-
-</CartProvider>
-
-);
-
-
+    </CartProvider>
+  );
 }
-
 
 export default App;
