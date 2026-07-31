@@ -1,46 +1,64 @@
+import { Link } from "react-router-dom";
 import "./Login.css";
 
-function Login(){
+function Login() {
+  return (
+    <div className="auth-page">
 
-return(
+      <div className="auth-card">
 
-<div className="login-container">
+        <div className="auth-logo">
+          🏠 HOMEKART
+        </div>
 
-<div className="login-box">
+        <h1>Login</h1>
 
-<h2>
-Login to HOMEKART
-</h2>
+        <p className="auth-subtitle">
+          Welcome back! Please login to your account.
+        </p>
 
+        <form>
 
-<input 
-type="email"
-placeholder="Enter Email"
-/>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+            />
+          </div>
 
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+            />
+          </div>
 
-<input 
-type="password"
-placeholder="Enter Password"
-/>
+          <div className="forgot-password">
+            <a href="#">Forgot Password?</a>
+          </div>
 
+          <button
+            type="submit"
+            className="auth-button"
+          >
+            Login
+          </button>
 
-<button>
-Login
-</button>
+        </form>
 
+        <p className="auth-switch">
+          Don't have an account?{" "}
+          <Link to="/register">
+            Create Account
+          </Link>
+        </p>
 
-<p>
-Don't have an account? Register
-</p>
+      </div>
 
-
-</div>
-
-</div>
-
-);
-
+    </div>
+  );
 }
 
 export default Login;
