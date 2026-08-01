@@ -1,0 +1,236 @@
+/* =========================
+   ORDER SUCCESS PAGE
+========================= */
+
+.order-success-page {
+  min-height: 70vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 50px 20px;
+
+  background: #f5f5f5;
+}
+
+
+/* =========================
+   SUCCESS CARD
+========================= */
+
+.order-success-card {
+  width: 100%;
+  max-width: 700px;
+
+  background: white;
+
+  padding: 45px;
+
+  text-align: center;
+
+  border-radius: 15px;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+
+/* =========================
+   SUCCESS ICON
+========================= */
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+
+  margin: 0 auto 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #ff9800;
+
+  color: white;
+
+  font-size: 45px;
+  font-weight: bold;
+}
+
+
+/* =========================
+   HEADING
+========================= */
+
+.order-success-card h1 {
+  margin: 0 0 15px;
+
+  font-size: 32px;
+
+  color: #222;
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+.success-message {
+  color: #666;
+
+  font-size: 17px;
+
+  line-height: 1.6;
+
+  margin-bottom: 30px;
+}
+
+
+/* =========================
+   ORDER INFORMATION
+========================= */
+
+.success-order-info {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 15px;
+
+  padding: 20px;
+
+  margin-bottom: 25px;
+
+  background: #fff7e6;
+
+  border: 1px solid #ffcc80;
+
+  border-radius: 10px;
+}
+
+.success-order-info div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.success-order-info span {
+  color: #777;
+
+  font-size: 14px;
+}
+
+.success-order-info strong {
+  color: #222;
+
+  font-size: 16px;
+}
+
+
+/* =========================
+   DELIVERY MESSAGE
+========================= */
+
+.delivery-message {
+  margin: 20px 0 30px;
+
+  color: #555;
+
+  font-size: 16px;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.success-actions {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 15px;
+
+  flex-wrap: wrap;
+}
+
+.view-order-button,
+.continue-shopping-button {
+  display: inline-block;
+
+  padding: 13px 25px;
+
+  border-radius: 8px;
+
+  text-decoration: none;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  transition: 0.2s;
+}
+
+
+/* VIEW ORDER */
+
+.view-order-button {
+  background: #ff9800;
+
+  color: white;
+}
+
+.view-order-button:hover {
+  background: #f57c00;
+}
+
+
+/* CONTINUE SHOPPING */
+
+.continue-shopping-button {
+  background: #222;
+
+  color: white;
+}
+
+.continue-shopping-button:hover {
+  background: #444;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  .order-success-page {
+    padding: 30px 15px;
+  }
+
+  .order-success-card {
+    padding: 30px 20px;
+  }
+
+  .order-success-card h1 {
+    font-size: 26px;
+  }
+
+  .success-order-info {
+    grid-template-columns: 1fr;
+  }
+
+  .success-actions {
+    flex-direction: column;
+  }
+
+  .view-order-button,
+  .continue-shopping-button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
