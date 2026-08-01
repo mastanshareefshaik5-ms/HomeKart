@@ -1,141 +1,204 @@
-.navbar-logo,
-.nav-item {
-    text-decoration: none;
-    color: white;
-}
+/* =========================
+   NAVBAR
+========================= */
+
 .navbar {
-    width: 100%;
-    min-height: 70px;
-    background: #131921;
-    color: white;
+  width: 100%;
+  min-height: 90px;
 
-    display: flex;
-    align-items: center;
-    gap: 20px;
+  background: #111820;
 
-    padding: 10px 25px;
-    box-sizing: border-box;
+  display: flex;
+  align-items: center;
+
+  padding: 0 45px;
+
+  box-sizing: border-box;
+
+  gap: 35px;
 }
 
-/* LOGO */
+
+/* =========================
+   LOGO
+========================= */
 
 .navbar-logo {
-    font-size: 24px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
+  color: white;
+
+  text-decoration: none;
+
+  font-size: 32px;
+
+  font-weight: bold;
+
+  white-space: nowrap;
+
+  margin-right: auto;
 }
 
-.navbar-logo span {
-    margin-right: 6px;
+
+/* =========================
+   NAVIGATION LINKS
+========================= */
+
+.navbar-links {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 28px;
 }
 
-/* LOCATION */
 
-.delivery-location {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    min-width: 120px;
-    cursor: pointer;
+/* =========================
+   INDIVIDUAL LINKS
+========================= */
+
+.navbar-links a {
+  color: white;
+
+  text-decoration: none;
+
+  font-size: 17px;
+
+  font-weight: 600;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  white-space: nowrap;
+
+  transition: 0.2s;
 }
 
-.delivery-location svg {
-    font-size: 20px;
+
+.navbar-links a:hover {
+  color: #ff9800;
 }
 
-.delivery-location div {
-    display: flex;
-    flex-direction: column;
+
+/* =========================
+   ICONS
+========================= */
+
+.navbar-links svg {
+  font-size: 18px;
 }
 
-.delivery-location small {
-    color: #cccccc;
-    font-size: 11px;
+
+/* =========================
+   CART COUNT
+========================= */
+
+.cart-count {
+  background: #ff9800;
+
+  color: white;
+
+  min-width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+
+  font-weight: bold;
+
+  margin-left: 2px;
 }
 
-.delivery-location strong {
-    font-size: 13px;
-}
 
-/* SEARCH */
+/* =========================
+   MOBILE
+========================= */
 
-.search-container {
-    flex: 1;
-    display: flex;
-    height: 42px;
-    max-width: 700px;
-}
+@media (max-width: 1100px) {
 
-.search-container input {
-    flex: 1;
-    border: none;
-    outline: none;
-    padding: 0 15px;
+  .navbar {
+    padding: 0 25px;
+
+    gap: 20px;
+  }
+
+  .navbar-logo {
+    font-size: 27px;
+  }
+
+  .navbar-links {
+    gap: 18px;
+  }
+
+  .navbar-links a {
     font-size: 15px;
-    border-radius: 5px 0 0 5px;
+  }
+
 }
 
-.search-container button {
-    width: 50px;
-    border: none;
-    background: #ff9900;
-    cursor: pointer;
-    font-size: 17px;
-    border-radius: 0 5px 5px 0;
-}
 
-/* ACTIONS */
+@media (max-width: 800px) {
 
-.navbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    margin-left: auto;
-}
-
-.nav-item {
-    position: relative;
-
-    display: flex;
+  .navbar {
     flex-direction: column;
-    align-items: center;
 
-    gap: 4px;
+    padding: 20px;
 
-    font-size: 13px;
-    cursor: pointer;
+    gap: 20px;
+  }
 
-    white-space: nowrap;
-}
+  .navbar-logo {
+    margin-right: 0;
+  }
 
-.nav-item svg {
-    font-size: 20px;
-}
+  .navbar-links {
+    flex-wrap: wrap;
 
-.nav-item:hover {
-    color: #ff9900;
-}
-
-/* CART COUNT */
-
-.cart b {
-    position: absolute;
-
-    top: -8px;
-    right: 7px;
-
-    background: #ff9900;
-    color: #111;
-
-    border-radius: 50%;
-
-    min-width: 18px;
-    height: 18px;
-
-    display: flex;
-    align-items: center;
     justify-content: center;
 
-    font-size: 11px;
+    gap: 15px;
+  }
+
+}
+/* USER NAME */
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #333;
+  font-weight: 600;
+}
+
+
+/* LOGOUT BUTTON */
+
+.navbar-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  border: none;
+  background: transparent;
+
+  color: #e53935;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.navbar-logout:hover {
+  color: #b71c1c;
 }

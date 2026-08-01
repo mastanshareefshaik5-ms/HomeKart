@@ -9,6 +9,10 @@ import Wishlist from "./pages/Wishlist/Wishlist";
 import ProductDetails from "./pages/ProductDetails/ProductDetails";
 import Checkout from "./pages/Checkout/Checkout";
 import Products from "./pages/Products/Products";
+import Categories from "./pages/Categories/Categories";
+import OrderSuccess from "./pages/OrderSuccess/OrderSuccess";
+import Order from "./pages/Order/Order";
+import Profile from "./pages/Profile/Profile";
 
 import { CartProvider } from "./context/CartContext";
 
@@ -19,7 +23,9 @@ import {
 } from "react-router-dom";
 
 function App() {
+
   return (
+
     <CartProvider>
 
       <BrowserRouter>
@@ -39,6 +45,11 @@ function App() {
           />
 
           <Route
+            path="/categories"
+            element={<Categories />}
+          />
+
+          <Route
             path="/login"
             element={<Login />}
           />
@@ -46,6 +57,11 @@ function App() {
           <Route
             path="/register"
             element={<Register />}
+          />
+
+          <Route
+            path="/profile"
+            element={<Profile />}
           />
 
           <Route
@@ -62,11 +78,20 @@ function App() {
             path="/product-details/:id"
             element={<ProductDetails />}
           />
-          
 
           <Route
             path="/checkout"
             element={<Checkout />}
+          />
+
+          <Route
+            path="/order-success"
+            element={<OrderSuccess />}
+          />
+
+          <Route
+            path="/order"
+            element={<Order />}
           />
 
         </Routes>
@@ -76,7 +101,9 @@ function App() {
       </BrowserRouter>
 
     </CartProvider>
+
   );
+
 }
 
 export default App;

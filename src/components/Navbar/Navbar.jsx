@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
+import "./Navbar.css";
+
 import {
   FaHeart,
   FaShoppingCart,
   FaUser,
-  FaMapMarkerAlt,
+  FaBoxOpen,
   FaSignOutAlt
 } from "react-icons/fa";
+
 import { Link, useNavigate } from "react-router-dom";
+import { useContext, useState, useEffect } from "react";
 
-import { useContext } from "react";
 import { CartContext } from "../../context/CartContext";
-
-import "./Navbar.css";
 
 function Navbar() {
 
@@ -21,16 +21,26 @@ function Navbar() {
 
   const [user, setUser] = useState(null);
 
+  // Check logged-in user
   useEffect(() => {
 
-    const storedUser = localStorage.getItem("user");
+    const savedUser =
+      JSON.parse(
+        localStorage.getItem("user")
+      );
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    setUser(savedUser);
 
   }, []);
 
+  // Cart count
+  const cartCount = cartItems.reduce(
+    (total, item) =>
+      total + Number(item.quantity || 0),
+    0
+  );
+
+  // Logout
   const handleLogout = () => {
 
     localStorage.removeItem("token");
@@ -39,132 +49,100 @@ function Navbar() {
     setUser(null);
 
     navigate("/login");
+
   };
 
   return (
 
     <nav className="navbar">
 
-      {/* Logo */}
+      {/* LOGO */}
 
-      <Link to="/" className="navbar-logo">
+      <Link
+        to="/"
+        className="navbar-logo"
+      >
         🏠 HOMEKART
       </Link>
 
 
-      {/* Search */}
+      {/* NAVIGATION */}
 
-      <div className="search-box">
+      <div className="navbar-links">
 
-        <input
-          type="text"
-          placeholder="Search household products..."
-        />
+        <Link to="/">
+          Home
+        </Link>
 
-        <button>
-          Search
-        </button>
+        <Link to="/products">
+          Products
+        </Link>
 
-      </div>
+        <Link to="/categories">
+          Categories
+        </Link>
 
+        <Link to="/order">
+          <FaBoxOpen />
+          Orders
+        </Link>
 
-      {/* Location */}
+        <Link to="/wishlist">
+          <FaHeart />
+          Wishlist
+        </Link>
 
-      <div className="navbar-location">
+        <Link to="/cart">
 
-        <FaMapMarkerAlt />
+          <FaShoppingCart />
 
-        <div>
-          <small>Deliver to</small>
-          <strong>India</strong>
-        </div>
+          Cart
 
-      </div>
+          {cartCount > 0 && (
 
+            <span className="cart-count">
+              {cartCount}
+            </span>
 
-      {/* User */}
-
-      {user ? (
-
-        <div className="navbar-user">
-
-          <FaUser />
-
-          <div>
-            <small>Hello,</small>
-
-            <strong>
-              {user.name}
-            </strong>
-          </div>
-
-        </div>
-
-      ) : (
-
-        <Link
-          to="/login"
-          className="navbar-login"
-        >
-
-          <FaUser />
-
-          <div>
-            <small>Hello,</small>
-            <strong>Login</strong>
-          </div>
+          )}
 
         </Link>
 
-      )}
 
+        {/* LOGIN / USER */}
 
-      {/* Wishlist */}
+        {user ? (
 
-      <Link
-        to="/wishlist"
-        className="navbar-icon"
-      >
+          <>
 
-        <FaHeart />
+            <span className="navbar-user">
+              <FaUser />
+              {user.name || "User"}
+            </span>
 
-        <span>Wishlist</span>
+            <button
+              className="navbar-logout"
+              onClick={handleLogout}
+            >
+              <FaSignOutAlt />
+              Logout
+            </button>
 
-      </Link>
+          </>
 
+        ) : (
 
-      {/* Cart */}
+          <Link to="/login">
 
-      <Link
-        to="/cart"
-        className="navbar-cart"
-      >
+            <FaUser />
 
-        <FaShoppingCart />
+            Login
 
-        <span>
-          Cart ({cartItems.length})
-        </span>
+          </Link>
 
-      </Link>
+        )}
 
-
-      {/* Logout */}
-
-      {user && (
-
-        <button
-          className="logout-button"
-          onClick={handleLogout}
-        >
-
-          <FaSignOutAlt />
-
-          Logout
-
-        </button>
-
-      )}
+      </div>
 
     </nav>
 
