@@ -1,0 +1,130 @@
+.admin-orders {
+  min-height: 70vh;
+  padding: 40px;
+  background: #f5f5f5;
+}
+
+.admin-orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.admin-orders-header h1 {
+  margin: 0;
+  font-size: 32px;
+  color: #111820;
+}
+
+.admin-orders-header p {
+  color: #666;
+}
+
+.refresh-orders-btn {
+  background: #ff7200;
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 7px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.refresh-orders-btn:hover {
+  background: #e65f00;
+}
+
+.orders-table-container {
+  background: white;
+  border-radius: 12px;
+  overflow-x: auto;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th {
+  background: #111820;
+  color: white;
+  padding: 16px;
+  text-align: left;
+}
+
+.orders-table td {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.orders-table tr:hover {
+  background: #fafafa;
+}
+
+.order-status {
+  background: #fff3e0;
+  color: #ff7200;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.admin-orders-message {
+  background: white;
+  padding: 50px;
+  text-align: center;
+  border-radius: 10px;
+  color: #666;
+  font-size: 18px;
+}
+
+@media (max-width: 700px) {
+  .admin-orders {
+    padding: 20px;
+  }
+
+  .admin-orders-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+}
+.order-status-select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.delete-order-btn {
+  background: #e53935;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-order-btn:hover {
+  background: #c62828;
+}
+
+.admin-orders-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 25px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.admin-orders-error button {
+  background: #ff7200;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+}
