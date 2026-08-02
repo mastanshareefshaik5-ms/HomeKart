@@ -1,216 +1,133 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import axios from "axios";
 import { FaStar, FaShoppingCart } from "react-icons/fa";
 
 import { CartContext } from "../../context/CartContext";
 
 import "./ProductDetails.css";
 
-
-// =====================================================
-// HOMEKART STATIC PRODUCTS
-// =====================================================
-
-const products = [
-
-  {
-    id: "1",
-    name: "Chilli Powder",
-    description: "Pure red chilli powder - 500g",
-    price: 180,
-    rating: 4.5,
-    icon: "🌶️",
-    image: "",
-    category: "Spices",
-    details:
-      "Premium quality red chilli powder suitable for everyday cooking."
-  },
-
-  {
-    id: "2",
-    name: "Turmeric Powder",
-    description: "Premium turmeric powder - 200g",
-    price: 90,
-    rating: 4.6,
-    icon: "🟡",
-    image: "",
-    category: "Spices",
-    details:
-      "High-quality turmeric powder for curries and everyday cooking."
-  },
-
-  {
-    id: "3",
-    name: "Basmati Rice",
-    description: "Premium basmati rice - 5kg",
-    price: 650,
-    rating: 4.7,
-    icon: "🍚",
-    image: "",
-    category: "Rice & Dal",
-    details:
-      "Long-grain premium basmati rice suitable for biryani and daily meals."
-  },
-
-  {
-    id: "4",
-    name: "Cooking Oil",
-    description: "Refined cooking oil - 1L",
-    price: 145,
-    rating: 4.4,
-    icon: "🛢️",
-    image: "",
-    category: "Oils",
-    details:
-      "Quality cooking oil suitable for frying and everyday cooking."
-  },
-
-  {
-    id: "5",
-    name: "Dishwash Liquid",
-    description: "Lemon dishwash liquid - 500ml",
-    price: 120,
-    rating: 4.5,
-    icon: "🧴",
-    image: "",
-    category: "Cleaning",
-    details:
-      "Lemon dishwashing liquid designed to help clean dishes effectively."
-  },
-
-  {
-    id: "6",
-    name: "Detergent Powder",
-    description: "Powerful cleaning detergent - 1kg",
-    price: 210,
-    rating: 4.3,
-    icon: "🧼",
-    image: "",
-    category: "Cleaning",
-    details:
-      "Powerful detergent powder for everyday clothes washing."
-  },
-
-  {
-    id: "7",
-    name: "Bath Soap",
-    description: "Refreshing bath soap - Pack of 4",
-    price: 160,
-    rating: 4.6,
-    icon: "🧴",
-    image: "",
-    category: "Personal Care",
-    details:
-      "Refreshing bath soap suitable for everyday personal care."
-  },
-
-  {
-    id: "8",
-    name: "Sugar",
-    description: "Premium white sugar - 1kg",
-    price: 55,
-    rating: 4.5,
-    icon: "🍚",
-    image: "",
-    category: "Grocery",
-    details:
-      "Premium white sugar for tea, coffee, sweets and cooking."
-  },
-
-
-  // =====================================================
-  // HOME PAGE PRODUCTS
-  // =====================================================
-
-  {
-    id: "home-rice-5kg",
-    name: "Basmati Rice 5kg",
-    description:
-      "Premium quality basmati rice for your daily needs.",
-    price: 650,
-    rating: 4.7,
-    icon: "🍚",
-    image: "",
-    category: "Groceries",
-    details:
-      "Premium long-grain basmati rice suitable for biryani, pulao and everyday meals."
-  },
-
-  {
-    id: "home-oil-1l",
-    name: "Sunflower Oil 1L",
-    description:
-      "Healthy and refined sunflower cooking oil.",
-    price: 150,
-    rating: 4.6,
-    icon: "🛢️",
-    image: "",
-    category: "Cooking Oils",
-    details:
-      "Refined sunflower oil suitable for frying and everyday cooking."
-  },
-
-  {
-    id: "home-milk",
-    name: "Premium Milk",
-    description:
-      "Fresh and nutritious premium quality milk.",
-    price: 60,
-    rating: 4.8,
-    icon: "🥛",
-    image: "",
-    category: "Dairy Products",
-    details:
-      "Fresh and nutritious milk suitable for drinking, tea, coffee and cooking."
-  },
-
-  {
-    id: "home-chocolate",
-    name: "Chocolate Snacks",
-    description:
-      "Delicious chocolate snacks for everyone.",
-    price: 120,
-    rating: 4.5,
-    icon: "🍫",
-    image: "",
-    category: "Snacks",
-    details:
-      "Delicious chocolate snacks perfect for enjoying with family and friends."
-  }
-
-];
-
-
-// =====================================================
-// COMPONENT
-// =====================================================
-
 function ProductDetails() {
 
   const { id } = useParams();
 
-  const { addToCart } =
-    useContext(CartContext);
+  const { addToCart } = useContext(CartContext);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
 
-  // ===================================================
-  // FIND PRODUCT
-  // ===================================================
+  // ==========================================
+  // FETCH PRODUCT
+  // ==========================================
 
-  const product = products.find(
-    (item) =>
-      String(item.id) === String(id)
-  );
+  useEffect(() => {
+
+    let mounted = true;
+
+    const fetchProduct = async () => {
+
+      try {
+
+        const response = await axios.get(
+          `http://localhost:5000/api/products/${id}`
+        );
+
+        if (mounted) {
+          setProduct(response.data);
+        }
+
+      } catch (error) {
+
+        console.error(
+          "PRODUCT DETAILS ERROR:",
+          error
+        );
+
+        if (mounted) {
+          setError("Product not found");
+        }
+
+      } finally {
+
+        if (mounted) {
+          setLoading(false);
+        }
+
+      }
+
+    };
+
+    fetchProduct();
+
+    return () => {
+      mounted = false;
+    };
+
+  }, [id]);
 
 
-  // ===================================================
-  // PRODUCT NOT FOUND
-  // ===================================================
+  // ==========================================
+  // IMAGE URL
+  // ==========================================
 
-  if (!product) {
+  const getImageUrl = (image) => {
+
+    if (
+      !image ||
+      typeof image !== "string"
+    ) {
+      return "/default-product.png";
+    }
+
+    const cleanImage = image.trim();
+
+    if (cleanImage === "") {
+      return "/default-product.png";
+    }
+
+    if (
+      cleanImage.startsWith("http://") ||
+      cleanImage.startsWith("https://")
+    ) {
+      return cleanImage;
+    }
+
+    if (cleanImage.startsWith("/")) {
+      return cleanImage;
+    }
+
+    return `/${cleanImage}`;
+  };
+
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
+  if (loading) {
 
     return (
+      <div className="product-not-found">
 
+        <h2>
+          Loading product...
+        </h2>
+
+      </div>
+    );
+
+  }
+
+
+  // ==========================================
+  // PRODUCT NOT FOUND
+  // ==========================================
+
+  if (error || !product) {
+
+    return (
       <div className="product-not-found">
 
         <h2>
@@ -227,20 +144,22 @@ function ProductDetails() {
         </Link>
 
       </div>
-
     );
 
   }
 
 
-  // ===================================================
+  // ==========================================
   // ADD TO CART
-  // ===================================================
+  // ==========================================
 
   const handleAddToCart = () => {
 
-    addToCart(product);
+    if (product.stock === 0) {
+      return;
+    }
 
+    addToCart(product);
   };
 
 
@@ -251,49 +170,58 @@ function ProductDetails() {
       <div className="product-details-container">
 
 
-        {/* ============================================
+        {/* =====================================
             PRODUCT IMAGE
-        ============================================ */}
+        ===================================== */}
 
         <div className="product-details-image">
 
-          {product.image ? (
+          <img
+            src={getImageUrl(product.image)}
+            alt={product.name || "Product"}
+            onError={(event) => {
 
-            <img
-              src={product.image}
-              alt={product.name}
-            />
+              event.currentTarget.onerror = null;
 
-          ) : (
+              event.currentTarget.src =
+                "/default-product.png";
 
-            <span className="product-details-icon">
-              {product.icon}
-            </span>
-
-          )}
+            }}
+          />
 
         </div>
 
 
-        {/* ============================================
+        {/* =====================================
             PRODUCT INFORMATION
-        ============================================ */}
+        ===================================== */}
 
         <div className="product-details-info">
 
 
+          {/* CATEGORY */}
+
           <p className="product-category">
-            {product.category}
+
+            {product.category || "HOMEKART"}
+
           </p>
 
+
+          {/* PRODUCT NAME */}
 
           <h1>
             {product.name}
           </h1>
 
 
+          {/* DESCRIPTION */}
+
           <p className="product-description-large">
-            {product.description}
+
+            {product.description ||
+              "Quality household product."}
+
           </p>
 
 
@@ -304,7 +232,7 @@ function ProductDetails() {
             <FaStar />
 
             <span>
-              {product.rating}
+              {product.rating || 0}
             </span>
 
             <span>
@@ -323,11 +251,41 @@ function ProductDetails() {
           </div>
 
 
+          {/* BRAND */}
+
+          <p className="product-details-text">
+
+            <strong>
+              Brand:
+            </strong>{" "}
+
+            {product.brand || "HOMEKART"}
+
+          </p>
+
+
+          {/* STOCK */}
+
+          <p className="product-details-text">
+
+            <strong>
+              Availability:
+            </strong>{" "}
+
+            {product.stock > 0
+              ? `In Stock (${product.stock})`
+              : "Out of Stock"}
+
+          </p>
+
+
           {/* DETAILS */}
 
           <p className="product-details-text">
 
-            {product.details}
+            {product.details ||
+              product.description ||
+              "Premium quality household product suitable for everyday use."}
 
           </p>
 
@@ -337,17 +295,24 @@ function ProductDetails() {
           <div className="product-actions">
 
 
+            {/* ADD TO CART */}
+
             <button
               className="details-add-cart"
               onClick={handleAddToCart}
+              disabled={product.stock === 0}
             >
 
               <FaShoppingCart />
 
-              Add to Cart
+              {product.stock > 0
+                ? "Add to Cart"
+                : "Out of Stock"}
 
             </button>
 
+
+            {/* BUY NOW */}
 
             <Link
               to="/cart"
@@ -358,21 +323,28 @@ function ProductDetails() {
 
             </Link>
 
-
           </div>
+
+
+          {/* BACK TO PRODUCTS */}
+
+          <Link
+            to="/products"
+            className="back-to-products"
+          >
+
+            ← Back to Products
+
+          </Link>
 
 
         </div>
 
-
       </div>
-
 
     </div>
 
   );
-
 }
-
 
 export default ProductDetails;
