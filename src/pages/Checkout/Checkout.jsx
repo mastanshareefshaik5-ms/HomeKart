@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
 
 import "./Checkout.css";
 
@@ -14,6 +15,8 @@ function Checkout() {
     clearCart
   } = useContext(CartContext);
 
+  const { user } = useContext(AuthContext);
+
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -25,155 +28,210 @@ function Checkout() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  /* =========================
-     DELIVERY CHARGE
-  ========================= */
-
+  // DELIVERY CHARGE
   const deliveryCharge =
-    cartTotal >= 500 || cartTotal === 0
+    Number(cartTotal) >= 500 || Number(cartTotal) === 0
       ? 0
       : 40;
 
+  // FINAL TOTAL
   const finalTotal =
-    cartTotal + deliveryCharge;
+    Number(cartTotal) + Number(deliveryCharge);
 
-
-  /* =========================
-     HANDLE INPUT
-  ========================= */
-
+  // HANDLE INPUT
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData({
-      ...formData,
+    setFormData((previous) => ({
+      ...previous,
       [name]: value
-    });
+    }));
   };
 
-
-  /* =========================
-     PLACE ORDER
-  ========================= */
-
-  const handleSubmit = (event) => {
+  // PLACE ORDER
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
 
-
-    /* CHECK CART */
-
+    // CHECK CART
     if (cartItems.length === 0) {
       setError("Your cart is empty.");
       return;
     }
 
+    // CHECK LOGIN
+    if (!user) {
+      setError("Please login before placing an order.");
+      return;
+    }
 
-    /* CHECK MOBILE */
-
+    // CHECK MOBILE
     if (!/^[0-9]{10}$/.test(formData.mobile)) {
       setError(
         "Please enter a valid 10-digit mobile number."
       );
-
       return;
     }
 
-
-    /* CHECK PINCODE */
-
+    // CHECK PINCODE
     if (!/^[0-9]{6}$/.test(formData.pincode)) {
       setError(
         "Please enter a valid 6-digit pincode."
       );
-
       return;
     }
 
+    setLoading(true);
 
-    /* CREATE ORDER */
+    try {
+      /*
+       * CREATE ORDER ITEMS
+       *
+       * This format matches Backend/models/Order.js
+       */
 
-    const order = {
-      orderId: "HK" + Date.now(),
+      const items = cartItems.map((item) => ({
+        product: item._id,
+        name: item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+        image: item.image || ""
+      }));
 
-      customer: {
-        ...formData
-      },
+      /*
+       * CREATE FULL ADDRESS
+       */
 
-      items: [...cartItems],
+      const fullAddress = [
+        formData.name,
+        formData.address,
+        formData.city,
+        formData.state,
+        formData.pincode
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-      subtotal: Number(cartTotal),
+      /*
+       * DATA SENT TO BACKEND
+       */
 
-      deliveryCharge: Number(deliveryCharge),
+      const orderData = {
+        items: items,
+        totalAmount: Number(finalTotal),
+        address: fullAddress,
+        phone: formData.mobile
+      };
 
-      total: Number(finalTotal),
+      console.log(
+        "Sending order:",
+        orderData
+      );
 
-      orderDate: new Date().toISOString(),
+      /*
+       * GET LOGIN TOKEN
+       */
 
-      status: "Placed"
-    };
+      const token =
+        localStorage.getItem("token");
 
+      if (!token) {
+        setError(
+          "Login session expired. Please login again."
+        );
 
-    /* =========================
-       GET EXISTING ORDERS
-    ========================= */
+        setLoading(false);
+        return;
+      }
 
-    const existingOrders =
-      JSON.parse(
-        localStorage.getItem("homekart-orders")
-      ) || [];
+      /*
+       * SEND ORDER TO BACKEND
+       */
 
+      const response = await fetch(
+        "http://localhost:5000/api/orders",
+        {
+          method: "POST",
 
-    /* =========================
-       ADD NEW ORDER
-    ========================= */
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
 
-    const updatedOrders = [
-      ...existingOrders,
-      order
-    ];
+          body: JSON.stringify(orderData)
+        }
+      );
 
+      /*
+       * READ BACKEND RESPONSE
+       */
 
-    /* =========================
-       SAVE ALL ORDERS
-    ========================= */
+      const data = await response.json();
 
-    localStorage.setItem(
-      "homekart-orders",
-      JSON.stringify(updatedOrders)
-    );
+      console.log(
+        "Order response:",
+        data
+      );
 
+      /*
+       * CHECK RESPONSE
+       */
 
-    /* =========================
-       SAVE LATEST ORDER
-    ========================= */
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Failed to create order"
+        );
+      }
 
-    localStorage.setItem(
-      "latestOrder",
-      JSON.stringify(order)
-    );
+      /*
+       * SAVE LATEST ORDER
+       *
+       * Used by Order page.
+       */
 
+      localStorage.setItem(
+        "latestOrder",
+        JSON.stringify(data.order)
+      );
 
-    /* =========================
-       CLEAR CART
-    ========================= */
+      /*
+       * CLEAR CART
+       */
 
-    clearCart();
+      clearCart();
 
+      /*
+       * GO TO ORDER PAGE
+       */
 
-    /* =========================
-       GO TO ORDER PAGE
-    ========================= */
+      navigate("/order");
 
-    navigate("/order");
+    } catch (error) {
+
+      console.error(
+        "PLACE ORDER ERROR:",
+        error
+      );
+
+      setError(
+        error.message ||
+        "Something went wrong while placing the order."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
   };
 
-
-  /* =========================
-     EMPTY CART
-  ========================= */
+  /*
+   * EMPTY CART
+   */
 
   if (cartItems.length === 0) {
     return (
@@ -188,7 +246,9 @@ function Checkout() {
         </p>
 
         <button
-          onClick={() => navigate("/products")}
+          onClick={() =>
+            navigate("/products")
+          }
         >
           Continue Shopping
         </button>
@@ -197,7 +257,6 @@ function Checkout() {
     );
   }
 
-
   return (
     <div className="checkout-page">
 
@@ -205,9 +264,7 @@ function Checkout() {
         Checkout
       </h1>
 
-
       <div className="checkout-layout">
-
 
         {/* =========================
             CUSTOMER DETAILS
@@ -219,7 +276,6 @@ function Checkout() {
             Delivery Address
           </h2>
 
-
           {/* ERROR */}
 
           {error && (
@@ -228,9 +284,7 @@ function Checkout() {
             </div>
           )}
 
-
           <form onSubmit={handleSubmit}>
-
 
             {/* FULL NAME */}
 
@@ -250,7 +304,6 @@ function Checkout() {
               />
 
             </div>
-
 
             {/* MOBILE */}
 
@@ -273,7 +326,6 @@ function Checkout() {
 
             </div>
 
-
             {/* ADDRESS */}
 
             <div className="checkout-field">
@@ -292,7 +344,6 @@ function Checkout() {
               />
 
             </div>
-
 
             {/* CITY + STATE */}
 
@@ -315,7 +366,6 @@ function Checkout() {
 
               </div>
 
-
               <div className="checkout-field">
 
                 <label>
@@ -334,7 +384,6 @@ function Checkout() {
               </div>
 
             </div>
-
 
             {/* PINCODE */}
 
@@ -357,7 +406,6 @@ function Checkout() {
 
             </div>
 
-
             {/* =========================
                 PAYMENT
             ========================= */}
@@ -366,9 +414,7 @@ function Checkout() {
               Payment Method
             </h2>
 
-
             <div className="payment-options">
-
 
               {/* CASH ON DELIVERY */}
 
@@ -388,7 +434,6 @@ function Checkout() {
                 Cash on Delivery
 
               </label>
-
 
               {/* ONLINE PAYMENT */}
 
@@ -411,20 +456,23 @@ function Checkout() {
 
             </div>
 
-
             {/* PLACE ORDER */}
 
             <button
               type="submit"
               className="place-order-button"
+              disabled={loading}
             >
-              Place Order
+
+              {loading
+                ? "Placing Order..."
+                : "Place Order"}
+
             </button>
 
           </form>
 
         </div>
-
 
         {/* =========================
             ORDER SUMMARY
@@ -435,7 +483,6 @@ function Checkout() {
           <h2>
             Order Summary
           </h2>
-
 
           {/* PRODUCTS */}
 
@@ -472,9 +519,7 @@ function Checkout() {
 
           </div>
 
-
           <hr />
-
 
           {/* SUBTOTAL */}
 
@@ -489,7 +534,6 @@ function Checkout() {
             </strong>
 
           </div>
-
 
           {/* DELIVERY */}
 
@@ -509,9 +553,7 @@ function Checkout() {
 
           </div>
 
-
           <hr />
-
 
           {/* TOTAL */}
 
