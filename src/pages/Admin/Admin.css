@@ -1,0 +1,174 @@
+.admin-page {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  background: #f5f6fa;
+}
+
+.admin-sidebar {
+  width: 250px;
+  min-height: calc(100vh - 70px);
+  background: #1f2937;
+  color: white;
+  padding: 25px 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-logo {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.admin-title {
+  color: #cbd5e1;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-sidebar nav a {
+  color: white;
+  text-decoration: none;
+  padding: 13px 15px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.admin-sidebar nav a:hover {
+  background: #374151;
+}
+
+.admin-logout {
+  margin-top: auto;
+  border: none;
+  padding: 13px;
+  border-radius: 8px;
+  background: #dc2626;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 35px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.admin-header p {
+  color: #6b7280;
+}
+
+.admin-user {
+  background: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.admin-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.admin-card span {
+  font-size: 35px;
+}
+
+.admin-card h2 {
+  margin: 15px 0 8px;
+}
+
+.admin-card p {
+  color: #6b7280;
+  min-height: 42px;
+}
+
+.admin-card a,
+.admin-card button {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 7px;
+  background: #ff8c00;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-welcome {
+  background: white;
+  margin-top: 25px;
+  padding: 30px;
+  border-radius: 12px;
+}
+
+.admin-message {
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.admin-message a {
+  color: #ff8c00;
+}
+
+@media (max-width: 1000px) {
+  .admin-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-page {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: auto;
+    min-height: auto;
+  }
+
+  .admin-sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .admin-content {
+    padding: 20px;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .admin-cards {
+    grid-template-columns: 1fr;
+  }
+}
