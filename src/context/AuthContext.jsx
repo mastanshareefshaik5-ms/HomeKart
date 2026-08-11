@@ -1,143 +1,152 @@
 import { createContext, useEffect, useState } from "react";
-import axios from "axios";
 
 export const AuthContext = createContext();
 
-const API_URL = "http://localhost:5000/api/auth";
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    return savedUser
-      ? JSON.parse(savedUser)
-      : null;
-  });
+  // ==========================================
+  // LOAD USER FROM LOCAL STORAGE
+  // ==========================================
 
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
 
-  // ===============================
+      if (token && savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+
+        console.log("AUTH USER:", parsedUser);
+        console.log("AUTH ROLE:", parsedUser?.role);
+
+        setUser(parsedUser);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("AUTH LOAD ERROR:", error);
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ==========================================
   // LOGIN
-  // ===============================
+  // ==========================================
 
   const login = async (email, password) => {
-    setLoading(true);
-
     try {
-      const response = await axios.post(
-        `${API_URL}/login`,
+      const response = await fetch(
+        "http://localhost:5000/api/auth/login",
         {
-          email,
-          password,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
         }
       );
 
-      const { token, user } = response.data;
+      const data = await response.json();
 
-      localStorage.setItem("token", token);
+      console.log("LOGIN RESPONSE:", data);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || "Login failed",
+        };
+      }
+
+      const loggedInUser = data.user;
+
+      if (!data.token || !loggedInUser) {
+        return {
+          success: false,
+          message: "Invalid login response",
+        };
+      }
+
+      // Save token
+      localStorage.setItem("token", data.token);
+
+      // Save current user
       localStorage.setItem(
         "user",
-        JSON.stringify(user)
+        JSON.stringify(loggedInUser)
       );
 
-      setUser(user);
+      // Update React state
+      setUser(loggedInUser);
+
+      console.log("CURRENT USER:", loggedInUser);
+      console.log("CURRENT ROLE:", loggedInUser.role);
 
       return {
         success: true,
-        user,
+        user: loggedInUser,
+        token: data.token,
       };
-
     } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
       return {
         success: false,
         message:
-          error.response?.data?.message ||
-          "Login failed",
+          error.message || "Unable to login",
       };
-
-    } finally {
-      setLoading(false);
     }
   };
 
-
-  // ===============================
-  // REGISTER
-  // ===============================
-
-  const register = async (
-    name,
-    email,
-    password
-  ) => {
-    setLoading(true);
-
-    try {
-      const response = await axios.post(
-        `${API_URL}/register`,
-        {
-          name,
-          email,
-          password,
-        }
-      );
-
-      return {
-        success: true,
-        message: response.data.message,
-      };
-
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error.response?.data?.message ||
-          "Registration failed",
-      };
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  // ===============================
+  // ==========================================
   // LOGOUT
-  // ===============================
+  // ==========================================
 
   const logout = () => {
+    console.log("LOGGING OUT USER");
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
     setUser(null);
   };
 
+  // ==========================================
+  // UPDATE USER
+  // ==========================================
 
-  // ===============================
-  // CHECK LOGIN
-  // ===============================
-
-  useEffect(() => {
-    const savedToken =
-      localStorage.getItem("token");
-
-    const savedUser =
-      localStorage.getItem("user");
-
-    if (savedToken && savedUser) {
-      setUser(JSON.parse(savedUser));
+  const updateUser = (updatedUser) => {
+    if (!updatedUser) {
+      return;
     }
-  }, []);
 
+    localStorage.setItem(
+      "user",
+      JSON.stringify(updatedUser)
+    );
+
+    setUser(updatedUser);
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        loading,
+        setUser,
+        updateUser,
         login,
-        register,
         logout,
+        loading,
       }}
     >
       {children}

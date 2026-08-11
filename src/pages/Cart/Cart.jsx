@@ -1,49 +1,57 @@
 import { useContext } from "react";
-import { FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
-
 import { CartContext } from "../../context/CartContext";
 import "./Cart.css";
 
 function Cart() {
   const {
     cartItems,
-    removeFromCart,
     increaseQuantity,
     decreaseQuantity,
+    removeFromCart,
   } = useContext(CartContext);
 
-  // Calculate subtotal safely
-  const totalPrice = cartItems.reduce(
-    (total, item) =>
-      total +
-      (Number(item.price) || 0) *
-        (Number(item.quantity) || 0),
-    0
-  );
+  const items = Array.isArray(cartItems) ? cartItems : [];
 
-  // Delivery charge
+  // ==============================
+  // TOTAL PRICE
+  // ==============================
+
+  const totalPrice = items.reduce((total, item) => {
+    const price = Number(
+      item.finalPrice ?? item.price ?? 0
+    );
+
+    const quantity = Number(
+      item.quantity || 1
+    );
+
+    return total + price * quantity;
+  }, 0);
+
+  // ==============================
+  // DELIVERY
+  // ==============================
+
   const deliveryCharge =
-    totalPrice >= 500 || totalPrice === 0
+    totalPrice === 0
+      ? 0
+      : totalPrice >= 500
       ? 0
       : 40;
 
-  // Final total
+  // ==============================
+  // FINAL TOTAL
+  // ==============================
+
   const finalTotal =
     totalPrice + deliveryCharge;
 
-  // Total number of products
-  const totalItems = cartItems.reduce(
-    (total, item) =>
-      total + (Number(item.quantity) || 0),
-    0
-  );
-
-  // =========================
+  // ==============================
   // EMPTY CART
-  // =========================
+  // ==============================
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="empty-cart">
 
@@ -51,12 +59,12 @@ function Cart() {
           🛒
         </div>
 
-        <h2>
+        <h1>
           Your Cart is Empty
-        </h2>
+        </h1>
 
         <p>
-          Add some household products
+          Add some HOMEKART products
           to your cart.
         </p>
 
@@ -71,160 +79,178 @@ function Cart() {
     );
   }
 
-  // =========================
-  // CART PAGE
-  // =========================
+  // ==============================
+  // CART
+  // ==============================
 
   return (
     <div className="cart-page">
 
       <div className="cart-container">
 
-        {/* =====================
-            CART PRODUCTS
-        ====================== */}
+        {/* =================================
+            LEFT SIDE - CART PRODUCTS
+        ================================= */}
 
         <div className="cart-products">
 
-          <h2>
-            Shopping Cart
-          </h2>
+          <div className="cart-header">
 
-          {cartItems.map((item) => (
+            <h1>
+              Shopping Cart
+            </h1>
 
-            <div
-              className="cart-item"
-              key={item._id}
-            >
+            <span>
+              {items.length}{" "}
+              {items.length === 1
+                ? "item"
+                : "items"}
+            </span>
 
-              {/* PRODUCT IMAGE */}
+          </div>
 
-              <div className="cart-product-image">
+          {/* CART ITEMS */}
 
-                {item.image ? (
+          {items.map((item, index) => {
+
+            const price = Number(
+              item.finalPrice ??
+              item.price ??
+              0
+            );
+
+            const quantity = Number(
+              item.quantity || 1
+            );
+
+            const itemTotal =
+              price * quantity;
+
+            return (
+              <div
+                className="cart-item"
+                key={
+                  item._id ||
+                  item.product ||
+                  index
+                }
+              >
+
+                {/* PRODUCT IMAGE */}
+
+                <div className="cart-product-image">
 
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={
+                      item.image ||
+                      "https://via.placeholder.com/150"
+                    }
+                    alt={
+                      item.name ||
+                      "Product"
+                    }
+                    onError={(event) => {
+                      event.currentTarget.src =
+                        "https://via.placeholder.com/150";
+                    }}
                   />
 
-                ) : (
+                </div>
 
-                  <span>
-                    {item.icon || "🛒"}
-                  </span>
+                {/* PRODUCT DETAILS */}
 
-                )}
+                <div className="cart-product-details">
 
-              </div>
+                  <h3>
+                    {item.name}
+                  </h3>
 
+                  <p>
+                    {item.brand ||
+                      "HOMEKART"}
+                  </p>
 
-              {/* PRODUCT DETAILS */}
+                  <strong>
+                    ₹
+                    {price.toLocaleString(
+                      "en-IN"
+                    )}
+                  </strong>
 
-              <div className="cart-product-details">
+                  {/* QUANTITY */}
 
-                <h3>
-                  {item.name}
-                </h3>
+                  <div className="quantity-controls">
 
-                <p>
-                  {item.description}
-                </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        decreaseQuantity(
+                          item._id
+                        )
+                      }
+                    >
+                      −
+                    </button>
 
-                <strong>
-                  ₹{Number(item.price) || 0}
-                </strong>
+                    <span>
+                      {quantity}
+                    </span>
 
+                    <button
+                      type="button"
+                      onClick={() =>
+                        increaseQuantity(
+                          item._id
+                        )
+                      }
+                    >
+                      +
+                    </button>
 
-                {/* QUANTITY CONTROLS */}
+                  </div>
 
-                <div className="quantity-controls">
+                </div>
+
+                {/* RIGHT SIDE */}
+
+                <div className="cart-item-right">
+
+                  <h3>
+                    ₹
+                    {itemTotal.toLocaleString(
+                      "en-IN"
+                    )}
+                  </h3>
 
                   <button
                     type="button"
+                    className="remove-button"
                     onClick={() =>
-                      decreaseQuantity(item._id)
+                      removeFromCart(
+                        item._id
+                      )
                     }
                   >
-                    −
-                  </button>
-
-                  <span>
-                    {item.quantity}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      increaseQuantity(item._id)
-                    }
-                  >
-                    +
+                    Remove
                   </button>
 
                 </div>
 
               </div>
-
-
-              {/* RIGHT SIDE */}
-
-              <div className="cart-item-right">
-
-                <h3>
-                  ₹
-                  {(Number(item.price) || 0) *
-                    (Number(item.quantity) || 0)}
-                </h3>
-
-                <button
-                  type="button"
-                  className="remove-button"
-                  onClick={() =>
-                    removeFromCart(item._id)
-                  }
-                >
-
-                  <FaTrash />
-
-                  Remove
-
-                </button>
-
-              </div>
-
-            </div>
-
-          ))}
+            );
+          })}
 
         </div>
 
-
-        {/* =====================
-            ORDER SUMMARY
-        ====================== */}
+        {/* =================================
+            RIGHT SIDE - ORDER SUMMARY
+        ================================= */}
 
         <div className="cart-summary">
 
           <h2>
             Order Summary
           </h2>
-
-
-          {/* ITEMS */}
-
-          <div className="summary-row">
-
-            <span>
-              Items
-            </span>
-
-            <span>
-              {totalItems}
-            </span>
-
-          </div>
-
 
           {/* SUBTOTAL */}
 
@@ -234,12 +260,14 @@ function Cart() {
               Subtotal
             </span>
 
-            <span>
-              ₹{totalPrice}
-            </span>
+            <strong>
+              ₹
+              {totalPrice.toLocaleString(
+                "en-IN"
+              )}
+            </strong>
 
           </div>
-
 
           {/* DELIVERY */}
 
@@ -249,33 +277,33 @@ function Cart() {
               Delivery
             </span>
 
-            <span>
+            <strong>
 
               {deliveryCharge === 0
                 ? "FREE"
                 : `₹${deliveryCharge}`}
 
-            </span>
+            </strong>
 
           </div>
 
-
           {/* FREE DELIVERY MESSAGE */}
 
-          {totalPrice < 500 && (
+          {totalPrice > 0 &&
+            totalPrice < 500 && (
+              <p className="free-delivery-message">
 
-            <p className="free-delivery-message">
+                Add ₹
+                {(500 - totalPrice).toLocaleString(
+                  "en-IN"
+                )}{" "}
+                more for FREE
+                delivery.
 
-              Add ₹{500 - totalPrice} more
-              for FREE delivery.
+              </p>
+            )}
 
-            </p>
-
-          )}
-
-
-          <hr />
-
+          <div className="summary-divider" />
 
           {/* FINAL TOTAL */}
 
@@ -286,11 +314,13 @@ function Cart() {
             </span>
 
             <strong>
-              ₹{finalTotal}
+              ₹
+              {finalTotal.toLocaleString(
+                "en-IN"
+              )}
             </strong>
 
           </div>
-
 
           {/* CHECKOUT */}
 
@@ -301,14 +331,13 @@ function Cart() {
             Proceed to Checkout
           </Link>
 
-
           {/* CONTINUE SHOPPING */}
 
           <Link
             to="/products"
             className="continue-shopping-small"
           >
-            Continue Shopping
+            ← Continue Shopping
           </Link>
 
         </div>

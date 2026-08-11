@@ -1,74 +1,215 @@
-import "./Navbar.css";
+import { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   FaHeart,
   FaShoppingCart,
   FaUser,
+  FaPhone,
   FaBoxOpen,
-  FaSignOutAlt
+  FaSearch,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
-import { Link, useNavigate } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
-
 import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
+
+import "./Navbar.css";
 
 function Navbar() {
-
   const { cartItems } = useContext(CartContext);
+  const { user, logout } = useContext(AuthContext);
 
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
+  // ==========================================
+  // CART COUNT
+  // ==========================================
 
-  // Check logged-in user
-  useEffect(() => {
+  const cartCount = Array.isArray(cartItems)
+    ? cartItems.reduce(
+        (total, item) =>
+          total + Number(item.quantity || 1),
+        0
+      )
+    : 0;
 
-    const savedUser =
-      JSON.parse(
-        localStorage.getItem("user")
-      );
+  // ==========================================
+  // LOGOUT
+  // ==========================================
 
-    setUser(savedUser);
-
-  }, []);
-
-  // Cart count
-  const cartCount = cartItems.reduce(
-    (total, item) =>
-      total + Number(item.quantity || 0),
-    0
-  );
-
-  // Logout
   const handleLogout = () => {
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    setUser(null);
+    if (logout) {
+      logout();
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
 
     navigate("/login");
-
   };
 
+  // ==========================================
+  // USER DISPLAY NAME
+  // ==========================================
+
+  const displayName = user?.name?.trim()
+    ? user.name
+    : "User";
+
+  // ==========================================
+  // NAVBAR
+  // ==========================================
+
   return (
+    <header>
 
-    <nav className="navbar">
+      {/* ==========================================
+          TOP BAR
+      ========================================== */}
 
-      {/* LOGO */}
+      <div className="top-bar">
 
-      <Link
-        to="/"
-        className="navbar-logo"
-      >
-        🏠 HOMEKART
-      </Link>
+      <div className="customer-contact">
 
+        <a href="tel:+919959820059">
+          <FaPhone />
+          Customer Care : +91 9959820059
+        </a>
 
-      {/* NAVIGATION */}
+        <a href="mailto:johnsaida374@gmail.com">
+          📧 johnsaida374@gmail.com
+        </a>
 
-      <div className="navbar-links">
+      </div>
+
+        <div>
+        Premium Grocery Store
+      </div>
+
+      </div>
+      {/* ==========================================
+          MAIN NAVBAR
+      ========================================== */}
+
+      <div className="navbar-main">
+
+        {/* LOGO */}
+
+        <Link
+          to="/"
+          className="navbar-logo"
+        >
+          <h1>HOMEKART</h1>
+
+          <p>
+            Fresh • Trusted • Delivered
+          </p>
+        </Link>
+
+        {/* SEARCH */}
+
+        <div className="navbar-search">
+
+          <input
+            type="text"
+            placeholder="Search products..."
+          />
+
+          <button type="button">
+            <FaSearch />
+          </button>
+
+        </div>
+
+        {/* ACTIONS */}
+
+        <div className="navbar-actions">
+
+          {/* WISHLIST */}
+
+          <Link
+            to="/wishlist"
+            title="Wishlist"
+          >
+            <FaHeart />
+          </Link>
+
+          {/* CART */}
+
+          <Link
+            to="/cart"
+            className="cart-link"
+            title="Cart"
+          >
+
+            <FaShoppingCart />
+
+            {cartCount > 0 && (
+              <span className="cart-count">
+                {cartCount}
+              </span>
+            )}
+
+          </Link>
+
+          {/* USER */}
+
+          {user ? (
+            <>
+
+              <div className="navbar-user">
+
+                <FaUser />
+
+                <Link
+                  to="/profile"
+                  className="navbar-profile-link"
+                  title="Edit Profile"
+                >
+                  {displayName}
+                </Link>
+
+              </div>
+
+              {/* LOGOUT */}
+
+              <button
+                type="button"
+                className="logout-btn"
+                onClick={handleLogout}
+                title="Logout"
+              >
+                <FaSignOutAlt />
+              </button>
+
+            </>
+          ) : (
+
+            <Link
+              to="/login"
+              className="login-link"
+            >
+
+              <FaUser />
+
+              <span>
+                Login
+              </span>
+
+            </Link>
+
+          )}
+
+        </div>
+
+      </div>
+
+      {/* ==========================================
+          GREEN MENU
+      ========================================== */}
+
+      <nav className="navbar-menu">
 
         <Link to="/">
           Home
@@ -78,74 +219,33 @@ function Navbar() {
           Products
         </Link>
 
-        <Link to="/categories">
-          Categories
-        </Link>
-
         <Link to="/order">
+
           <FaBoxOpen />
+
           Orders
+
         </Link>
 
         <Link to="/wishlist">
+
           <FaHeart />
+
           Wishlist
-        </Link>
-
-        <Link to="/cart">
-
-          <FaShoppingCart />
-
-          Cart
-
-          {cartCount > 0 && (
-
-            <span className="cart-count">
-              {cartCount}
-            </span>
-
-          )}
 
         </Link>
 
+        <Link to="/contact">
 
-        {/* LOGIN / USER */}
+          <FaPhone />
 
-        {user ? (
+          Contact
 
-          <>
+        </Link>
 
-            <span className="navbar-user">
-              <FaUser />
-              {user.name || "User"}
-            </span>
+      </nav>
 
-            <button
-              className="navbar-logout"
-              onClick={handleLogout}
-            >
-              <FaSignOutAlt />
-              Logout
-            </button>
-
-          </>
-
-        ) : (
-
-          <Link to="/login">
-
-            <FaUser />
-
-            Login
-
-          </Link>
-
-        )}
-
-      </div>
-
-    </nav>
-
+    </header>
   );
 }
 

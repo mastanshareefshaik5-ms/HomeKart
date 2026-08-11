@@ -1,89 +1,109 @@
-import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 
-import { AuthContext } from "../../context/AuthContext";
-
+import { saveAuth } from "../../utils/auth";
 import "./Register.css";
 
-function Register() {
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000";
 
+function Register() {
   const navigate = useNavigate();
 
-  const {
-    register,
-    loading
-  } = useContext(AuthContext);
-
-
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
-    mobile: "",
+    phone: "",
     password: "",
-    confirmPassword: "",
   });
 
+  const [loading, setLoading] = useState(false);
 
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
-
-  const handleChange = (event) => {
-
-    setFormData({
-      ...formData,
-      [event.target.name]:
-        event.target.value,
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
     });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const handleSubmit = async (event) => {
-
-    event.preventDefault();
-
-    setError("");
-    setMessage("");
-
+    if (!form.name || !form.email || !form.password) {
+      alert(
+        "Name, email and password are required."
+      );
+      return;
+    }
 
     if (
-      formData.password !==
-      formData.confirmPassword
+      form.phone &&
+      !/^[0-9]{10}$/.test(form.phone)
     ) {
+      alert(
+        "Please enter a valid 10-digit phone number."
+      );
+      return;
+    }
 
-      setError(
-        "Passwords do not match"
+    if (form.password.length < 6) {
+      alert(
+        "Password must contain at least 6 characters."
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/api/auth/register`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(form),
+        }
       );
 
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Registration failed"
+        );
+      }
+
+      saveAuth(
+        data.token,
+        data.user
+      );
+
+      alert(
+        "Account created successfully!"
+      );
+
+      navigate("/");
+
+    } catch (error) {
+      console.error(
+        "REGISTER ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to register"
+      );
+
+    } finally {
+      setLoading(false);
     }
-
-
-    const result = await register(
-      formData.name,
-      formData.email,
-      formData.password
-    );
-
-
-    if (!result.success) {
-
-      setError(result.message);
-
-      return;
-    }
-
-
-    setMessage(
-      "Registration successful! Redirecting to login..."
-    );
-
-
-    setTimeout(() => {
-      navigate("/login");
-    }, 1500);
   };
-
 
   return (
     <div className="auth-page">
@@ -91,112 +111,82 @@ function Register() {
       <div className="auth-card">
 
         <div className="auth-logo">
-          🏠 HOMEKART
+          🛒 HOMEKART
         </div>
 
-        <h1>Create Account</h1>
+        <h1>
+          Create HOMEKART Account
+        </h1>
 
         <p className="auth-subtitle">
-          Create your HOMEKART account
+          Create your account and start shopping.
         </p>
-
-
-        {message && (
-          <div className="success-message">
-            {message}
-          </div>
-        )}
-
-
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
-
 
         <form onSubmit={handleSubmit}>
 
-          <div className="form-group">
+          {/* NAME */}
 
+          <div className="form-group">
             <label>Full Name</label>
 
             <input
               type="text"
               name="name"
-              value={formData.name}
-              onChange={handleChange}
               placeholder="Enter your full name"
-              required
+              value={form.name}
+              onChange={handleChange}
+              autoComplete="name"
             />
-
           </div>
 
+          {/* EMAIL */}
 
           <div className="form-group">
-
-            <label>Email</label>
+            <label>Email Address</label>
 
             <input
               type="email"
               name="email"
-              value={formData.email}
-              onChange={handleChange}
               placeholder="Enter your email"
-              required
+              value={form.email}
+              onChange={handleChange}
+              autoComplete="email"
             />
-
           </div>
 
+          {/* PHONE */}
 
           <div className="form-group">
-
-            <label>Mobile Number</label>
+            <label>Phone Number</label>
 
             <input
               type="tel"
-              name="mobile"
-              value={formData.mobile}
+              name="phone"
+              placeholder="Enter 10-digit phone number"
+              value={form.phone}
               onChange={handleChange}
-              placeholder="Enter mobile number"
-              required
+              maxLength="10"
+              inputMode="numeric"
+              autoComplete="tel"
             />
-
           </div>
 
+          {/* PASSWORD */}
 
           <div className="form-group">
-
             <label>Password</label>
 
             <input
               type="password"
               name="password"
-              value={formData.password}
+              placeholder="Minimum 6 characters"
+              value={form.password}
               onChange={handleChange}
-              placeholder="Create a password"
-              minLength="6"
-              required
+              autoComplete="new-password"
             />
-
           </div>
 
-
-          <div className="form-group">
-
-            <label>Confirm Password</label>
-
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm password"
-              required
-            />
-
-          </div>
-
+          {/* BUTTON */}
 
           <button
             type="submit"
@@ -210,15 +200,14 @@ function Register() {
 
         </form>
 
+        {/* LOGIN */}
 
         <p className="auth-switch">
-
           Already have an account?{" "}
 
           <Link to="/login">
             Login
           </Link>
-
         </p>
 
       </div>

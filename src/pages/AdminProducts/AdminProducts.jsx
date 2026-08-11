@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./AdminProducts.css";
 
 function AdminProducts() {
@@ -7,16 +8,44 @@ function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(
         "http://localhost:5000/api/products"
       );
 
       const data = await response.json();
 
-      setProducts(Array.isArray(data) ? data : []);
+      console.log("PRODUCT API DATA:", data);
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch products"
+        );
+      }
+
+      // Your API returns an ARRAY directly
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else if (Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        setProducts([]);
+      }
 
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error(
+        "FETCH PRODUCTS ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to load products"
+      );
+
+      setProducts([]);
+
     } finally {
       setLoading(false);
     }
@@ -26,210 +55,365 @@ function AdminProducts() {
     fetchProducts();
   }, []);
 
-  // Convert database image path into a browser URL
-  const getImageUrl = (image) => {
-    if (!image || image.trim() === "") {
-      return "/default-product.png";
-    }
+  const deleteProduct = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
 
-    const cleanImage = image.trim();
-
-    // External image
-    if (
-      cleanImage.startsWith("http://") ||
-      cleanImage.startsWith("https://")
-    ) {
-      return cleanImage;
-    }
-
-    // Local image
-    return `/${cleanImage.replace(/^\/+/, "")}`;
-  };
-
-  // Handle broken images
-  const handleImageError = (e) => {
-    if (e.currentTarget.dataset.fallback === "true") {
+    if (!confirmDelete) {
       return;
     }
 
-    e.currentTarget.dataset.fallback = "true";
-    e.currentTarget.src = "/default-product.png";
-  };
-  const handleDelete = async (id) => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this product?"
-  );
+    try {
+      const token =
+        localStorage.getItem("token");
 
-  if (!confirmDelete) {
-    return;
-  }
+      const response = await fetch(
+        `http://localhost:5000/api/products/${id}`,
+        {
+          method: "DELETE",
 
-  try {
-    const token =
-      localStorage.getItem("token") ||
-      localStorage.getItem("authToken");
-
-    const response = await fetch(
-      `http://localhost:5000/api/products/${id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
+          headers: {
+            Authorization:
+              `Bearer ${token}`
+          }
         }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Failed to delete product"
+        );
       }
-    );
 
-    const data = await response.json();
+      alert(
+        "Product deleted successfully!"
+      );
 
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Failed to delete product"
+      // Remove deleted product immediately
+      setProducts((previousProducts) =>
+        previousProducts.filter(
+          (product) =>
+            product._id !== id
+        )
+      );
+
+    } catch (error) {
+      console.error(
+        "DELETE PRODUCT ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to delete product"
       );
     }
+  };
 
-    setProducts((currentProducts) =>
-      currentProducts.filter(
-        (product) => product._id !== id
-      )
+  const getPrice = (product) => {
+    if (
+      product.finalPrice !== undefined
+    ) {
+      return product.finalPrice;
+    }
+
+    const price =
+      Number(product.price) || 0;
+
+    const discount =
+      Number(product.discount) || 0;
+
+    return (
+      price -
+      (price * discount) / 100
     );
-
-    alert("Product deleted successfully!");
-
-  } catch (error) {
-    console.error("Delete product error:", error);
-
-    alert(error.message);
-  }
-};
+  };
 
   return (
-    <div className="admin-products">
+    <div className="admin-products-page">
+
+      {/* HEADER */}
 
       <div className="admin-products-header">
 
         <div>
-          <h1>Manage Products</h1>
+          <h1>
+            Manage Products
+          </h1>
 
           <p>
-            View and manage all HOMEKART products.
+            Manage your HOMEKART
+            products.
           </p>
         </div>
 
-        <button
-          className="add-product-btn"
-          onClick={() => {
-            window.location.href =
-              "/admin/products/add";
-          }}
+        <Link
+          to="/admin/products/add"
+          className="admin-add-product-btn"
         >
           + Add Product
-        </button>
+        </Link>
 
       </div>
 
 
-      {loading ? (
+      {/* LOADING */}
 
-        <div className="admin-loading">
+      {loading && (
+        <div className="admin-products-message">
           Loading products...
         </div>
-
-      ) : products.length === 0 ? (
-
-        <div className="admin-empty">
-          No products found.
-        </div>
-
-      ) : (
-
-        <div className="products-table-container">
-
-          <table className="products-table">
-
-            <thead>
-
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Actions</th>
-              </tr>
-
-            </thead>
+      )}
 
 
-            <tbody>
+      {/* NO PRODUCTS */}
 
-              {products.map((product) => (
+      {!loading &&
+        products.length === 0 && (
+          <div className="admin-products-message">
 
-                <tr key={product._id}>
+            <h2>
+              No Products Found
+            </h2>
 
-                  <td>
+            <p>
+              No products are available
+              in your database.
+            </p>
 
-                    <img
-                      src={getImageUrl(product.image)}
-                      alt={product.name || "Product"}
-                      className="admin-product-image"
-                      onError={handleImageError}
-                    />
-
-                  </td>
-
-
-                  <td>
-                    {product.name}
-                  </td>
+          </div>
+        )}
 
 
-                  <td>
-                    {product.category}
-                  </td>
+      {/* PRODUCTS */}
 
+      {!loading &&
+        products.length > 0 && (
 
-                  <td>
-                    ₹{product.price}
-                  </td>
+          <div className="admin-products-table-container">
 
+            <table className="admin-products-table">
 
-                  <td>
-                    {product.stock ?? "N/A"}
-                  </td>
+              <thead>
+                <tr>
 
+                  <th>
+                    Image
+                  </th>
 
-                  <td>
+                  <th>
+                    Product
+                  </th>
 
-                    <button
-                        className="edit-btn"
-                        onClick={() => {
-                        window.location.href =
-                        `/admin/products/edit/${product._id}`;
-                    }}
-                    >
-                        Edit
-                    </button>
+                  <th>
+                    Category
+                  </th>
 
-                    <button
-                        className="delete-btn"
-                        onClick={() => handleDelete(product._id)}
-                    >
-                         Delete
-                    </button>
+                  <th>
+                    Price
+                  </th>
 
-                  </td>
+                  <th>
+                    Stock
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Actions
+                  </th>
 
                 </tr>
+              </thead>
 
-              ))}
 
-            </tbody>
+              <tbody>
 
-          </table>
+                {products.map(
+                  (product) => (
 
-        </div>
+                    <tr
+                      key={
+                        product._id
+                      }
+                    >
 
-      )}
+                      {/* IMAGE */}
+
+                      <td>
+
+                        <img
+                          src={
+                            product.image ||
+                            "https://via.placeholder.com/70"
+                          }
+                          alt={
+                            product.name
+                          }
+                          className="admin-product-image"
+                          onError={(
+                            event
+                          ) => {
+                            event.currentTarget.src =
+                              "https://via.placeholder.com/70";
+                          }}
+                        />
+
+                      </td>
+
+
+                      {/* NAME */}
+
+                      <td>
+
+                        <div className="admin-product-name">
+
+                          <strong>
+                            {
+                              product.name
+                            }
+                          </strong>
+
+                          <small>
+                            SKU:{" "}
+                            {
+                              product.sku ||
+                              "N/A"
+                            }
+                          </small>
+
+                        </div>
+
+                      </td>
+
+
+                      {/* CATEGORY */}
+
+                      <td>
+                        {
+                          product.category ||
+                          "N/A"
+                        }
+                      </td>
+
+
+                      {/* PRICE */}
+
+                      <td>
+
+                        <strong>
+                          ₹
+                          {Number(
+                            getPrice(
+                              product
+                            )
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+                        </strong>
+
+                        {Number(
+                          product.discount
+                        ) > 0 && (
+                          <small className="admin-discount">
+                            {
+                              product.discount
+                            }
+                            % OFF
+                          </small>
+                        )}
+
+                      </td>
+
+
+                      {/* STOCK */}
+
+                      <td>
+
+                        <span
+                          className={
+                            Number(
+                              product.stock
+                            ) > 0
+                              ? "stock-available"
+                              : "stock-out"
+                          }
+                        >
+                          {
+                            product.stock
+                          }
+                        </span>
+
+                      </td>
+
+
+                      {/* STATUS */}
+
+                      <td>
+
+                        <span
+                          className={
+                            product.isActive
+                              ? "product-active"
+                              : "product-inactive"
+                          }
+                        >
+                          {product.isActive
+                            ? "Active"
+                            : "Inactive"}
+                        </span>
+
+                      </td>
+
+
+                      {/* ACTIONS */}
+
+                      <td>
+
+                        <div className="admin-product-actions">
+
+                          <Link
+                            to={`/admin/products/edit/${product._id}`}
+                            className="admin-edit-btn"
+                          >
+                            Edit
+                          </Link>
+
+                          <button
+                            type="button"
+                            className="admin-delete-btn"
+                            onClick={() =>
+                              deleteProduct(
+                                product._id
+                              )
+                            }
+                          >
+                            Delete
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
 
     </div>
   );

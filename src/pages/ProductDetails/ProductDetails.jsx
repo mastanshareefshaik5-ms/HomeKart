@@ -8,7 +8,6 @@ import { CartContext } from "../../context/CartContext";
 import "./ProductDetails.css";
 
 function ProductDetails() {
-
   const { id } = useParams();
 
   const { addToCart } = useContext(CartContext);
@@ -17,19 +16,11 @@ function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
-  // ==========================================
-  // FETCH PRODUCT
-  // ==========================================
-
   useEffect(() => {
-
     let mounted = true;
 
     const fetchProduct = async () => {
-
       try {
-
         const response = await axios.get(
           `http://localhost:5000/api/products/${id}`
         );
@@ -37,9 +28,7 @@ function ProductDetails() {
         if (mounted) {
           setProduct(response.data);
         }
-
       } catch (error) {
-
         console.error(
           "PRODUCT DETAILS ERROR:",
           error
@@ -48,15 +37,11 @@ function ProductDetails() {
         if (mounted) {
           setError("Product not found");
         }
-
       } finally {
-
         if (mounted) {
           setLoading(false);
         }
-
       }
-
     };
 
     fetchProduct();
@@ -64,16 +49,9 @@ function ProductDetails() {
     return () => {
       mounted = false;
     };
-
   }, [id]);
 
-
-  // ==========================================
-  // IMAGE URL
-  // ==========================================
-
   const getImageUrl = (image) => {
-
     if (
       !image ||
       typeof image !== "string"
@@ -101,35 +79,19 @@ function ProductDetails() {
     return `/${cleanImage}`;
   };
 
-
-  // ==========================================
-  // LOADING
-  // ==========================================
-
   if (loading) {
-
     return (
       <div className="product-not-found">
-
         <h2>
           Loading product...
         </h2>
-
       </div>
     );
-
   }
 
-
-  // ==========================================
-  // PRODUCT NOT FOUND
-  // ==========================================
-
   if (error || !product) {
-
     return (
       <div className="product-not-found">
-
         <h2>
           Product Not Found
         </h2>
@@ -142,71 +104,52 @@ function ProductDetails() {
         <Link to="/products">
           Back to Products
         </Link>
-
       </div>
     );
-
   }
 
-
-  // ==========================================
-  // ADD TO CART
-  // ==========================================
-
   const handleAddToCart = () => {
-
     if (product.stock === 0) {
       return;
     }
 
     addToCart(product);
+
+    alert(
+      `${product.name} added to cart`
+    );
   };
 
-
   return (
-
     <div className="product-details-page">
 
       <div className="product-details-container">
 
-
-        {/* =====================================
-            PRODUCT IMAGE
-        ===================================== */}
+        {/* PRODUCT IMAGE */}
 
         <div className="product-details-image">
 
           <img
             src={getImageUrl(product.image)}
-            alt={product.name || "Product"}
+            alt={
+              product.name ||
+              "Product"
+            }
             onError={(event) => {
-
-              event.currentTarget.onerror = null;
+              event.currentTarget.onerror =
+                null;
 
               event.currentTarget.src =
                 "/default-product.png";
-
             }}
           />
 
         </div>
 
 
-        {/* =====================================
-            PRODUCT INFORMATION
-        ===================================== */}
+        {/* PRODUCT INFORMATION */}
 
         <div className="product-details-info">
-
-
-          {/* CATEGORY */}
-
-          <p className="product-category">
-
-            {product.category || "HOMEKART"}
-
-          </p>
-
 
           {/* PRODUCT NAME */}
 
@@ -218,10 +161,8 @@ function ProductDetails() {
           {/* DESCRIPTION */}
 
           <p className="product-description-large">
-
             {product.description ||
               "Quality household product."}
-
           </p>
 
 
@@ -245,9 +186,7 @@ function ProductDetails() {
           {/* PRICE */}
 
           <div className="product-details-price">
-
             ₹{product.price}
-
           </div>
 
 
@@ -259,7 +198,8 @@ function ProductDetails() {
               Brand:
             </strong>{" "}
 
-            {product.brand || "HOMEKART"}
+            {product.brand ||
+              "HOMEKART"}
 
           </p>
 
@@ -294,13 +234,14 @@ function ProductDetails() {
 
           <div className="product-actions">
 
-
             {/* ADD TO CART */}
 
             <button
               className="details-add-cart"
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
+              disabled={
+                product.stock === 0
+              }
             >
 
               <FaShoppingCart />
@@ -318,9 +259,7 @@ function ProductDetails() {
               to="/cart"
               className="buy-now"
             >
-
               Buy Now
-
             </Link>
 
           </div>
@@ -332,18 +271,14 @@ function ProductDetails() {
             to="/products"
             className="back-to-products"
           >
-
             ← Back to Products
-
           </Link>
-
 
         </div>
 
       </div>
 
     </div>
-
   );
 }
 

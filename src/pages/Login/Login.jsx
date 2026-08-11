@@ -1,9 +1,19 @@
-import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  useState,
+  useContext,
+} from "react";
 
-import { AuthContext } from "../../context/AuthContext";
+import {
+  useNavigate,
+  Link,
+} from "react-router-dom";
+
+import {
+  AuthContext,
+} from "../../context/AuthContext";
 
 import "./Login.css";
+
 
 function Login() {
 
@@ -11,118 +21,238 @@ function Login() {
 
   const {
     login,
-    loading
   } = useContext(AuthContext);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleSubmit = async (event) => {
 
-    event.preventDefault();
+  const [loading, setLoading] =
+    useState(false);
 
-    setError("");
 
-    const result = await login(
-      email,
-      password
-    );
+  // ==========================================
+  // INPUT CHANGE
+  // ==========================================
 
-    if (!result.success) {
+  const handleChange = (e) => {
 
-      setError(result.message);
+    setForm({
+      ...form,
 
-      return;
-    }
-
-    // ADMIN
-    if (result.user.role === "admin") {
-
-      navigate("/admin");
-
-      return;
-    }
-
-    // USER
-    navigate("/");
+      [e.target.name]:
+        e.target.value,
+    });
   };
 
 
+  // ==========================================
+  // LOGIN
+  // ==========================================
+
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+
+
+    if (
+      !form.email.trim() ||
+      !form.password
+    ) {
+
+      alert(
+        "Please enter email and password."
+      );
+
+      return;
+    }
+
+
+    try {
+
+      setLoading(true);
+
+
+      console.log(
+        "LOGIN EMAIL:",
+        form.email
+      );
+
+
+      const result =
+        await login(
+          form.email,
+          form.password
+        );
+
+
+      console.log(
+        "LOGIN RESULT:",
+        result
+      );
+
+
+      // ----------------------------------------
+      // LOGIN FAILED
+      // ----------------------------------------
+
+      if (!result.success) {
+
+        alert(
+          result.message ||
+          "Login failed"
+        );
+
+        return;
+      }
+
+
+      // ----------------------------------------
+      // VERIFY USER
+      // ----------------------------------------
+
+      console.log(
+        "LOGGED-IN USER:",
+        result.user
+      );
+
+      console.log(
+        "LOGGED-IN NAME:",
+        result.user?.name
+      );
+
+      console.log(
+        "LOGGED-IN ROLE:",
+        result.user?.role
+      );
+
+
+      if (!result.user) {
+
+        alert(
+          "User information was not received."
+        );
+
+        return;
+      }
+
+
+      alert(
+        `Welcome ${result.user.name || "User"}!`
+      );
+
+
+      // ----------------------------------------
+      // ADMIN
+      // ----------------------------------------
+
+      if (
+        result.user.role === "admin"
+      ) {
+
+        navigate("/admin");
+
+      }
+
+      // ----------------------------------------
+      // NORMAL CUSTOMER
+      // ----------------------------------------
+
+      else {
+
+        navigate("/");
+      }
+
+    } catch (error) {
+
+      console.error(
+        "LOGIN ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+        "Unable to login"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
+
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
+
     <div className="auth-page">
 
       <div className="auth-card">
 
-        <div className="auth-logo">
-          🏠 HOMEKART
-        </div>
+        <h1>
+          Login to HOMEKART
+        </h1>
 
-        <h1>Login</h1>
 
         <p className="auth-subtitle">
-          Welcome back! Please login to your account.
+          Welcome back! Please login
+          to continue.
         </p>
 
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+        <form
+          onSubmit={handleSubmit}
+        >
+
+          {/* EMAIL */}
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            autoComplete="email"
+            required
+          />
 
 
-        <form onSubmit={handleSubmit}>
+          {/* PASSWORD */}
 
-          <div className="form-group">
-
-            <label>Email</label>
-
-            <input
-              type="email"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-              placeholder="Enter your email"
-              required
-            />
-
-          </div>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            autoComplete="current-password"
+            required
+          />
 
 
-          <div className="form-group">
-
-            <label>Password</label>
-
-            <input
-              type="password"
-              value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-              placeholder="Enter your password"
-              required
-            />
-
-          </div>
-
+          {/* LOGIN BUTTON */}
 
           <button
             type="submit"
-            className="auth-button"
             disabled={loading}
           >
+
             {loading
               ? "Logging in..."
               : "Login"}
+
           </button>
 
         </form>
 
 
-        <p className="auth-switch">
+        <p className="auth-footer">
 
           Don't have an account?{" "}
 
@@ -137,5 +267,6 @@ function Login() {
     </div>
   );
 }
+
 
 export default Login;

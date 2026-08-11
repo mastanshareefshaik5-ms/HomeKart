@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./AddProduct.css";
 
 function AddProduct() {
@@ -7,33 +7,77 @@ function AddProduct() {
 
   const [formData, setFormData] = useState({
     name: "",
-    category: "",
-    price: "",
-    stock: "",
     description: "",
-    image: ""
+    brand: "HOMEKART",
+    category: "",
+    sku: "",
+    price: "",
+    discount: 0,
+    stock: "",
+    image: "",
+    rating: 4.5,
+    isActive: true
   });
 
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleChange = (event) => {
+    const {
+      name,
+      value,
+      type,
+      checked
+    } = event.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value
+    }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    setMessage("");
-    setError("");
+    if (!formData.name.trim()) {
+      alert("Product name is required.");
+      return;
+    }
+
+    if (!formData.category) {
+      alert("Please select a category.");
+      return;
+    }
+
+    if (
+      formData.price === "" ||
+      Number(formData.price) < 0
+    ) {
+      alert("Enter a valid price.");
+      return;
+    }
+
+    if (
+      formData.stock === "" ||
+      Number(formData.stock) < 0
+    ) {
+      alert("Enter a valid stock quantity.");
+      return;
+    }
 
     try {
+      setSaving(true);
+
       const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken");
+        localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login as admin.");
+        navigate("/login");
+        return;
+      }
 
       const response = await fetch(
         "http://localhost:5000/api/products",
@@ -41,174 +85,440 @@ function AddProduct() {
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`
           },
 
           body: JSON.stringify({
-            name: formData.name,
-            category: formData.category,
-            price: Number(formData.price),
-            stock: Number(formData.stock),
-            description: formData.description,
-            image: formData.image
+            name:
+              formData.name.trim(),
+
+            description:
+              formData.description.trim(),
+
+            brand:
+              formData.brand.trim(),
+
+            category:
+              formData.category,
+
+            sku:
+              formData.sku.trim(),
+
+            price:
+              Number(formData.price),
+
+            discount:
+              Number(formData.discount) || 0,
+
+            stock:
+              Number(formData.stock),
+
+            image:
+              formData.image.trim(),
+
+            rating:
+              Number(formData.rating) || 4.5,
+
+            isActive:
+              formData.isActive
           })
         }
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to add product"
+          data.message ||
+            "Failed to create product"
         );
       }
 
-      setMessage("Product added successfully!");
+      alert(
+        "Product added successfully!"
+      );
 
-      setTimeout(() => {
-        navigate("/admin/products");
-      }, 1000);
+      navigate("/admin/products");
 
     } catch (error) {
-      console.error("Add product error:", error);
-      setError(error.message);
+      console.error(
+        "ADD PRODUCT ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to add product"
+      );
+
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="add-product-page">
+    <div className="admin-add-product-page">
 
-      <div className="add-product-container">
+      <div className="admin-add-product-header">
 
-        <h1>Add New Product</h1>
+        <div>
+          <h1>
+            Add Product
+          </h1>
 
-        <p className="add-product-subtitle">
-          Add a new product to HOMEKART.
-        </p>
+          <p>
+            Add a new product to
+            HOMEKART.
+          </p>
+        </div>
 
-        {message && (
-          <div className="success-message">
-            {message}
+        <Link
+          to="/admin/products"
+          className="admin-back-btn"
+        >
+          ← Back to Products
+        </Link>
+
+      </div>
+
+
+      <form
+        className="admin-product-form"
+        onSubmit={handleSubmit}
+      >
+
+        {/* PRODUCT INFORMATION */}
+
+        <div className="admin-form-section">
+
+          <h2>
+            Product Information
+          </h2>
+
+          <div className="admin-form-grid">
+
+            <div className="admin-form-group">
+
+              <label>
+                Product Name *
+              </label>
+
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Example: Rice"
+                required
+              />
+
+            </div>
+
+
+            <div className="admin-form-group">
+
+              <label>
+                Brand
+              </label>
+
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand}
+                onChange={handleChange}
+                placeholder="HOMEKART"
+              />
+
+            </div>
+
+
+            <div className="admin-form-group">
+
+              <label>
+                Category *
+              </label>
+
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                required
+              >
+                <option value="">
+                  Select Category
+                </option>
+
+                <option value="Groceries">
+                  Groceries
+                </option>
+
+                <option value="Spices">
+                  Spices
+                </option>
+
+                <option value="Masala">
+                  Masala
+                </option>
+
+                <option value="Rice">
+                  Rice
+                </option>
+
+                <option value="Snacks">
+                  Snacks
+                </option>
+
+                <option value="Beverages">
+                  Beverages
+                </option>
+
+                <option value="Cleaning">
+                  Cleaning
+                </option>
+
+                <option value="Personal Care">
+                  Personal Care
+                </option>
+
+                <option value="Household">
+                  Household
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div className="admin-form-group">
+
+              <label>
+                SKU
+              </label>
+
+              <input
+                type="text"
+                name="sku"
+                value={formData.sku}
+                onChange={handleChange}
+                placeholder="Example: HK-RICE-001"
+              />
+
+            </div>
+
           </div>
-        )}
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit}>
+          <div className="admin-form-group">
 
-          <div className="form-group">
-            <label>Product Name</label>
+            <label>
+              Description
+            </label>
 
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
+            <textarea
+              name="description"
+              value={
+                formData.description
+              }
               onChange={handleChange}
-              placeholder="Example: Chilli Powder"
-              required
+              placeholder="Enter product description..."
             />
+
           </div>
 
-
-          <div className="form-group">
-            <label>Category</label>
-
-            <input
-              type="text"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              placeholder="Example: Grocery"
-              required
-            />
-          </div>
+        </div>
 
 
-          <div className="form-row">
+        {/* PRICE */}
 
-            <div className="form-group">
-              <label>Price (₹)</label>
+        <div className="admin-form-section">
+
+          <h2>
+            Price & Stock
+          </h2>
+
+          <div className="admin-form-grid">
+
+            <div className="admin-form-group">
+
+              <label>
+                Price (₹) *
+              </label>
 
               <input
                 type="number"
                 name="price"
+                min="0"
+                step="0.01"
                 value={formData.price}
                 onChange={handleChange}
-                min="0"
                 required
               />
+
             </div>
 
 
-            <div className="form-group">
-              <label>Stock</label>
+            <div className="admin-form-group">
+
+              <label>
+                Discount (%)
+              </label>
+
+              <input
+                type="number"
+                name="discount"
+                min="0"
+                max="100"
+                value={
+                  formData.discount
+                }
+                onChange={handleChange}
+              />
+
+            </div>
+
+
+            <div className="admin-form-group">
+
+              <label>
+                Stock *
+              </label>
 
               <input
                 type="number"
                 name="stock"
+                min="0"
                 value={formData.stock}
                 onChange={handleChange}
-                min="0"
                 required
               />
+
+            </div>
+
+
+            <div className="admin-form-group">
+
+              <label>
+                Rating
+              </label>
+
+              <input
+                type="number"
+                name="rating"
+                min="0"
+                max="5"
+                step="0.1"
+                value={formData.rating}
+                onChange={handleChange}
+              />
+
             </div>
 
           </div>
 
+        </div>
 
-          <div className="form-group">
-            <label>Image URL</label>
+
+        {/* IMAGE */}
+
+        <div className="admin-form-section">
+
+          <h2>
+            Product Image
+          </h2>
+
+          <div className="admin-form-group">
+
+            <label>
+              Image URL
+            </label>
 
             <input
               type="text"
               name="image"
               value={formData.image}
               onChange={handleChange}
-              placeholder="Enter product image URL"
+              placeholder="https://example.com/image.jpg"
             />
+
           </div>
 
+          {formData.image && (
+            <div className="admin-image-preview">
 
-          <div className="form-group">
-            <label>Description</label>
+              <img
+                src={formData.image}
+                alt="Product preview"
+                onError={(event) => {
+                  event.currentTarget.style.display =
+                    "none";
+                }}
+              />
 
-            <textarea
-              name="description"
-              value={formData.description}
+            </div>
+          )}
+
+        </div>
+
+
+        {/* STATUS */}
+
+        <div className="admin-form-section">
+
+          <h2>
+            Status
+          </h2>
+
+          <label className="admin-checkbox">
+
+            <input
+              type="checkbox"
+              name="isActive"
+              checked={
+                formData.isActive
+              }
               onChange={handleChange}
-              placeholder="Enter product description"
-              rows="5"
             />
-          </div>
+
+            Product is active
+
+          </label>
+
+        </div>
 
 
-          <div className="form-buttons">
+        {/* ACTIONS */}
 
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={() => navigate("/admin/products")}
-            >
-              Cancel
-            </button>
+        <div className="admin-form-actions">
 
-            <button
-              type="submit"
-              className="save-product-btn"
-            >
-              Add Product
-            </button>
+          <Link
+            to="/admin/products"
+            className="admin-cancel-btn"
+          >
+            Cancel
+          </Link>
 
-          </div>
+          <button
+            type="submit"
+            className="admin-save-btn"
+            disabled={saving}
+          >
+            {saving
+              ? "Adding..."
+              : "Add Product"}
+          </button>
 
-        </form>
+        </div>
 
-      </div>
+      </form>
 
     </div>
   );

@@ -1,209 +1,455 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./AdminReports.css";
 
 function AdminReports() {
-  const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [users, setUsers] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
-  const getToken = () => {
-    return (
-      localStorage.getItem("token") ||
-      localStorage.getItem("authToken")
-    );
-  };
-
-  const loadReports = async () => {
+  const fetchOrders = async () => {
     try {
       setLoading(true);
 
-      const token = getToken();
+      const token = localStorage.getItem("token");
 
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-
-      const [productsResponse, ordersResponse, usersResponse] =
-        await Promise.all([
-          fetch("http://localhost:5000/api/products"),
-          fetch("http://localhost:5000/api/orders/admin", {
-            headers
-          }),
-          fetch("http://localhost:5000/api/auth/users", {
-            headers
-          })
-        ]);
-
-      const productsData = await productsResponse.json();
-      const ordersData = await ordersResponse.json();
-      const usersData = await usersResponse.json();
-
-      setProducts(
-        Array.isArray(productsData)
-          ? productsData
-          : productsData.products || []
+      const response = await fetch(
+        "http://localhost:5000/api/orders",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch orders"
+        );
+      }
 
       setOrders(
-        Array.isArray(ordersData)
-          ? ordersData
-          : ordersData.orders || []
+        Array.isArray(data)
+          ? data
+          : data.orders || []
       );
-
-      setUsers(
-        Array.isArray(usersData)
-          ? usersData
-          : usersData.users || []
-      );
-
     } catch (error) {
-      console.error("Reports error:", error);
+      console.error(
+        "ADMIN REPORTS ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to load reports"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadReports();
+    fetchOrders();
   }, []);
-
-  const totalSales = orders.reduce(
-    (total, order) =>
-      total + Number(order.totalAmount || order.total || 0),
-    0
-  );
-
-  const pendingOrders = orders.filter(
-    (order) =>
-      (order.status || "Pending").toLowerCase() === "pending"
-  ).length;
 
   const deliveredOrders = orders.filter(
     (order) =>
-      (order.status || "").toLowerCase() === "delivered"
-  ).length;
+      order.orderStatus === "DELIVERED"
+  );
 
-  if (loading) {
-    return (
-      <div className="reports-loading">
-        Loading reports...
-      </div>
+  const cancelledOrders = orders.filter(
+    (order) =>
+      order.orderStatus === "CANCELLED"
+  );
+
+  const activeOrders = orders.filter(
+    (order) =>
+      order.orderStatus !== "DELIVERED" &&
+      order.orderStatus !== "CANCELLED"
+  );
+
+  const totalRevenue = deliveredOrders.reduce(
+    (total, order) =>
+      total + Number(order.totalAmount || 0),
+    0
+  );
+
+  const totalOrderValue = orders.reduce(
+    (total, order) =>
+      total + Number(order.totalAmount || 0),
+    0
+  );
+
+  const averageOrderValue =
+    orders.length > 0
+      ? totalOrderValue / orders.length
+      : 0;
+
+  const getItemsCount = (order) => {
+    if (!Array.isArray(order.items)) {
+      return 0;
+    }
+
+    return order.items.reduce(
+      (total, item) =>
+        total + Number(item.quantity || 0),
+      0
     );
-  }
+  };
+
+  const totalItems = orders.reduce(
+    (total, order) =>
+      total + getItemsCount(order),
+    0
+  );
+
+  const formatCurrency = (value) =>
+    `₹${Number(value || 0).toLocaleString(
+      "en-IN",
+      {
+        maximumFractionDigits: 2
+      }
+    )}`;
 
   return (
-    <div className="admin-reports">
+    <div className="admin-page">
 
-      <div className="reports-header">
+      <div className="admin-page-header">
 
         <div>
-          <h1>Store Reports</h1>
+          <h1>Business Reports</h1>
+
           <p>
-            HOMEKART store overview and statistics.
+            HOMEKART sales and order
+            performance
           </p>
         </div>
 
         <button
-          className="refresh-report-btn"
-          onClick={loadReports}
+          type="button"
+          className="admin-refresh-btn"
+          onClick={fetchOrders}
         >
-          🔄 Refresh
+          ↻ Refresh
         </button>
 
       </div>
 
-      <div className="report-cards">
 
-        <div className="report-card">
-          <div className="report-icon">📦</div>
+      {loading ? (
 
-          <h3>Total Products</h3>
-
-          <strong>
-            {products.length}
-          </strong>
+        <div className="admin-loading">
+          Loading reports...
         </div>
 
+      ) : (
 
-        <div className="report-card">
-          <div className="report-icon">👥</div>
+        <>
 
-          <h3>Total Users</h3>
+          <div className="admin-stat-grid">
 
-          <strong>
-            {users.length}
-          </strong>
-        </div>
+            <div className="admin-stat-card">
 
+              <span>📦</span>
 
-        <div className="report-card">
-          <div className="report-icon">🛒</div>
+              <div>
 
-          <h3>Total Orders</h3>
+                <h3>
+                  {orders.length}
+                </h3>
 
-          <strong>
-            {orders.length}
-          </strong>
-        </div>
+                <p>
+                  Total Orders
+                </p>
 
+              </div>
 
-        <div className="report-card">
-          <div className="report-icon">💰</div>
-
-          <h3>Total Sales</h3>
-
-          <strong>
-            ₹{totalSales.toFixed(2)}
-          </strong>
-        </div>
-
-      </div>
+            </div>
 
 
-      <div className="report-secondary">
+            <div className="admin-stat-card">
 
-        <div className="report-box">
+              <span>🚚</span>
 
-          <h2>Order Status</h2>
+              <div>
 
-          <div className="status-row">
-            <span>Pending</span>
-            <strong>{pendingOrders}</strong>
+                <h3>
+                  {deliveredOrders.length}
+                </h3>
+
+                <p>
+                  Delivered Orders
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="admin-stat-card">
+
+              <span>⏳</span>
+
+              <div>
+
+                <h3>
+                  {activeOrders.length}
+                </h3>
+
+                <p>
+                  Active Orders
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="admin-stat-card">
+
+              <span>❌</span>
+
+              <div>
+
+                <h3>
+                  {cancelledOrders.length}
+                </h3>
+
+                <p>
+                  Cancelled Orders
+                </p>
+
+              </div>
+
+            </div>
+
           </div>
 
-          <div className="status-row">
-            <span>Delivered</span>
-            <strong>{deliveredOrders}</strong>
+
+          <div className="admin-stat-grid">
+
+            <div className="admin-stat-card">
+
+              <span>💰</span>
+
+              <div>
+
+                <h3>
+                  {formatCurrency(
+                    totalRevenue
+                  )}
+                </h3>
+
+                <p>
+                  Delivered Revenue
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="admin-stat-card">
+
+              <span>₹</span>
+
+              <div>
+
+                <h3>
+                  {formatCurrency(
+                    totalOrderValue
+                  )}
+                </h3>
+
+                <p>
+                  Total Order Value
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="admin-stat-card">
+
+              <span>📊</span>
+
+              <div>
+
+                <h3>
+                  {formatCurrency(
+                    averageOrderValue
+                  )}
+                </h3>
+
+                <p>
+                  Average Order Value
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="admin-stat-card">
+
+              <span>🛒</span>
+
+              <div>
+
+                <h3>
+                  {totalItems}
+                </h3>
+
+                <p>
+                  Products Ordered
+                </p>
+
+              </div>
+
+            </div>
+
           </div>
 
-        </div>
+
+          <div className="admin-dashboard-section">
+
+            <h2>
+              Order Performance
+            </h2>
 
 
-        <div className="report-box">
+            <div className="admin-report-card">
 
-          <h2>HOMEKART Summary</h2>
+              <div className="report-row">
 
-          <p>
-            Products: <strong>{products.length}</strong>
-          </p>
+                <span>
+                  Total Orders
+                </span>
 
-          <p>
-            Customers: <strong>{users.length}</strong>
-          </p>
+                <strong>
+                  {orders.length}
+                </strong>
 
-          <p>
-            Orders: <strong>{orders.length}</strong>
-          </p>
+              </div>
 
-          <p>
-            Sales: <strong>₹{totalSales.toFixed(2)}</strong>
-          </p>
 
-        </div>
+              <div className="report-row">
 
-      </div>
+                <span>
+                  Delivered
+                </span>
+
+                <strong>
+                  {deliveredOrders.length}
+                </strong>
+
+              </div>
+
+
+              <div className="report-row">
+
+                <span>
+                  Active
+                </span>
+
+                <strong>
+                  {activeOrders.length}
+                </strong>
+
+              </div>
+
+
+              <div className="report-row">
+
+                <span>
+                  Cancelled
+                </span>
+
+                <strong>
+                  {cancelledOrders.length}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="admin-dashboard-section">
+
+            <h2>
+              Revenue Summary
+            </h2>
+
+
+            <div className="admin-report-card">
+
+              <div className="report-row">
+
+                <span>
+                  Delivered Revenue
+                </span>
+
+                <strong>
+                  {formatCurrency(
+                    totalRevenue
+                  )}
+                </strong>
+
+              </div>
+
+
+              <div className="report-row">
+
+                <span>
+                  Total Order Value
+                </span>
+
+                <strong>
+                  {formatCurrency(
+                    totalOrderValue
+                  )}
+                </strong>
+
+              </div>
+
+
+              <div className="report-row">
+
+                <span>
+                  Average Order Value
+                </span>
+
+                <strong>
+                  {formatCurrency(
+                    averageOrderValue
+                  )}
+                </strong>
+
+              </div>
+
+
+              <div className="report-row">
+
+                <span>
+                  Total Items Sold
+                </span>
+
+                <strong>
+                  {totalItems}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </>
+
+      )}
 
     </div>
   );

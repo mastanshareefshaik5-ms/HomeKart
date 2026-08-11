@@ -1,484 +1,788 @@
 import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 
 import "./Checkout.css";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function Checkout() {
-  const navigate = useNavigate();
-
-  const {
-    cartItems,
-    cartTotal,
-    clearCart
-  } = useContext(CartContext);
-
+  const { cartItems, clearCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    mobile: "",
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+
+  const [address, setAddress] = useState({
+    name: user?.name || "",
+    phone: user?.phone || "",
     address: "",
     city: "",
     state: "",
     pincode: "",
-    paymentMethod: "Cash on Delivery"
   });
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  // IMPORTANT:
+  // Backend enum should receive COD or RAZORPAY
+  const [paymentMethod, setPaymentMethod] = useState("COD");
 
-  // DELIVERY CHARGE
+  // =====================================================
+  // CART
+  // =====================================================
+
+  const items = Array.isArray(cartItems) ? cartItems : [];
+
+  // =====================================================
+  // CALCULATE SUBTOTAL
+  // =====================================================
+
+  const totalPrice = items.reduce((total, item) => {
+    const price = Number(
+      item.finalPrice ?? item.price ?? 0
+    );
+
+    const quantity = Number(item.quantity || 1);
+
+    return total + price * quantity;
+  }, 0);
+
+  // =====================================================
+  // DELIVERY
+  // =====================================================
+
   const deliveryCharge =
-    Number(cartTotal) >= 500 || Number(cartTotal) === 0
+    totalPrice === 0
+      ? 0
+      : totalPrice >= 500
       ? 0
       : 40;
 
-  // FINAL TOTAL
-  const finalTotal =
-    Number(cartTotal) + Number(deliveryCharge);
+  const finalTotal = totalPrice + deliveryCharge;
 
-  // HANDLE INPUT
+  // =====================================================
+  // INPUT CHANGE
+  // =====================================================
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((previous) => ({
+    setAddress((previous) => ({
       ...previous,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  // PLACE ORDER
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  // =====================================================
+  // LOAD RAZORPAY
+  // =====================================================
 
-    setError("");
-
-    // CHECK CART
-    if (cartItems.length === 0) {
-      setError("Your cart is empty.");
-      return;
-    }
-
-    // CHECK LOGIN
-    if (!user) {
-      setError("Please login before placing an order.");
-      return;
-    }
-
-    // CHECK MOBILE
-    if (!/^[0-9]{10}$/.test(formData.mobile)) {
-      setError(
-        "Please enter a valid 10-digit mobile number."
-      );
-      return;
-    }
-
-    // CHECK PINCODE
-    if (!/^[0-9]{6}$/.test(formData.pincode)) {
-      setError(
-        "Please enter a valid 6-digit pincode."
-      );
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      /*
-       * CREATE ORDER ITEMS
-       *
-       * This format matches Backend/models/Order.js
-       */
-
-      const items = cartItems.map((item) => ({
-        product: item._id,
-        name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-        image: item.image || ""
-      }));
-
-      /*
-       * CREATE FULL ADDRESS
-       */
-
-      const fullAddress = [
-        formData.name,
-        formData.address,
-        formData.city,
-        formData.state,
-        formData.pincode
-      ]
-        .filter(Boolean)
-        .join(", ");
-
-      /*
-       * DATA SENT TO BACKEND
-       */
-
-      const orderData = {
-        items: items,
-        totalAmount: Number(finalTotal),
-        address: fullAddress,
-        phone: formData.mobile
-      };
-
-      console.log(
-        "Sending order:",
-        orderData
-      );
-
-      /*
-       * GET LOGIN TOKEN
-       */
-
-      const token =
-        localStorage.getItem("token");
-
-      if (!token) {
-        setError(
-          "Login session expired. Please login again."
-        );
-
-        setLoading(false);
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
         return;
       }
 
+      const script = document.createElement("script");
+
+      script.src =
+        "https://checkout.razorpay.com/v1/checkout.js";
+
+      script.onload = () => {
+        resolve(true);
+      };
+
+      script.onerror = () => {
+        resolve(false);
+      };
+
+      document.body.appendChild(script);
+    });
+  };
+
+  // =====================================================
+  // CREATE BACKEND ORDER
+  // =====================================================
+
+  const createBackendOrder = async (token) => {
+    /*
+      IMPORTANT:
+
+      Each item now contains:
+
+      product
+      name
+      price
+      quantity
+      subtotal
+      image
+
+      This fixes:
+      "items.0.subtotal: Path subtotal is required"
+    */
+
+    const orderData = {
+      items: items.map((item) => {
+        const price = Number(
+          item.finalPrice ?? item.price ?? 0
+        );
+
+        const quantity = Number(
+          item.quantity || 1
+        );
+
+        const subtotal = price * quantity;
+
+        return {
+          product: item._id,
+
+          name: item.name,
+
+          price: price,
+
+          quantity: quantity,
+
+          subtotal: subtotal,
+
+          image: item.image || "",
+        };
+      }),
+
+      totalAmount: finalTotal,
+
+      address: {
+        name: address.name,
+        phone: address.phone,
+        address: address.address,
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+      },
+
+      phone: address.phone,
+
       /*
-       * SEND ORDER TO BACKEND
-       */
+        IMPORTANT:
 
-      const response = await fetch(
-        "http://localhost:5000/api/orders",
-        {
-          method: "POST",
+        Send:
+        COD
 
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+        OR:
+
+        RAZORPAY
+
+        NOT:
+        "Cash on Delivery"
+        "Online Payment"
+      */
+
+      paymentMethod: paymentMethod,
+    };
+
+    console.log(
+      "ORDER DATA SENT TO BACKEND:",
+      orderData
+    );
+
+    const response = await fetch(
+      `${API_URL}/api/orders`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify(orderData),
+      }
+    );
+
+    const data = await response.json();
+
+    console.log(
+      "BACKEND ORDER RESPONSE:",
+      data
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          "Failed to create order"
+      );
+    }
+
+    return data.order;
+  };
+
+  // =====================================================
+  // RAZORPAY PAYMENT
+  // =====================================================
+
+  const handleRazorpayPayment = async (
+    token,
+    backendOrder
+  ) => {
+    const loaded = await loadRazorpay();
+
+    if (!loaded) {
+      throw new Error(
+        "Razorpay failed to load. Please check your internet connection."
+      );
+    }
+
+    // ===================================================
+    // CREATE RAZORPAY ORDER
+    // ===================================================
+
+    const response = await fetch(
+      `${API_URL}/api/payment/create-order`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify({
+          orderId: backendOrder._id,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    console.log(
+      "RAZORPAY ORDER RESPONSE:",
+      data
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          "Unable to start payment"
+      );
+    }
+
+    // ===================================================
+    // OPEN RAZORPAY
+    // ===================================================
+
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: data.key,
+
+        amount: data.amount,
+
+        currency: data.currency || "INR",
+
+        name: "HOMEKART",
+
+        description:
+          "HOMEKART Order Payment",
+
+        order_id:
+          data.razorpayOrderId,
+
+        prefill: {
+          name:
+            address.name ||
+            user?.name ||
+            "",
+
+          email:
+            user?.email ||
+            "",
+
+          contact:
+            address.phone ||
+            "",
+        },
+
+        theme: {
+          color: "#ff6b00",
+        },
+
+        handler: async function (
+          paymentResponse
+        ) {
+          try {
+            console.log(
+              "RAZORPAY PAYMENT:",
+              paymentResponse
+            );
+
+            // =========================================
+            // VERIFY PAYMENT
+            // =========================================
+
+            const verifyResponse =
+              await fetch(
+                `${API_URL}/api/payment/verify`,
+                {
+                  method: "POST",
+
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+
+                    Authorization:
+                      `Bearer ${token}`,
+                  },
+
+                  body: JSON.stringify(
+                    paymentResponse
+                  ),
+                }
+              );
+
+            const verifyData =
+              await verifyResponse.json();
+
+            console.log(
+              "PAYMENT VERIFY RESPONSE:",
+              verifyData
+            );
+
+            if (!verifyResponse.ok) {
+              throw new Error(
+                verifyData.message ||
+                  "Payment verification failed"
+              );
+            }
+
+            resolve(true);
+          } catch (error) {
+            reject(error);
+          }
+        },
+
+        modal: {
+          ondismiss: function () {
+            reject(
+              new Error(
+                "Payment was cancelled."
+              )
+            );
           },
+        },
+      };
 
-          body: JSON.stringify(orderData)
+      const razorpay =
+        new window.Razorpay(options);
+
+      razorpay.on(
+        "payment.failed",
+        function (response) {
+          console.error(
+            "RAZORPAY PAYMENT FAILED:",
+            response
+          );
+
+          reject(
+            new Error(
+              "Payment failed. Please try again."
+            )
+          );
         }
       );
 
-      /*
-       * READ BACKEND RESPONSE
-       */
+      razorpay.open();
+    });
+  };
 
-      const data = await response.json();
+  // =====================================================
+  // PLACE ORDER
+  // =====================================================
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // ===================================================
+    // TOKEN
+    // ===================================================
+
+    const token =
+      localStorage.getItem("token");
+
+    if (!token) {
+      alert(
+        "Please login before placing your order."
+      );
+
+      navigate("/login");
+
+      return;
+    }
+
+    // ===================================================
+    // CART
+    // ===================================================
+
+    if (items.length === 0) {
+      alert(
+        "Your cart is empty."
+      );
+
+      navigate("/products");
+
+      return;
+    }
+
+    // ===================================================
+    // ADDRESS VALIDATION
+    // ===================================================
+
+    if (
+      !address.name.trim() ||
+      !address.phone.trim() ||
+      !address.address.trim() ||
+      !address.city.trim() ||
+      !address.state.trim() ||
+      !address.pincode.trim()
+    ) {
+      alert(
+        "Please fill all delivery address details."
+      );
+
+      return;
+    }
+
+    // ===================================================
+    // PHONE VALIDATION
+    // ===================================================
+
+    if (
+      !/^[0-9]{10}$/.test(
+        address.phone
+      )
+    ) {
+      alert(
+        "Please enter a valid 10-digit phone number."
+      );
+
+      return;
+    }
+
+    // ===================================================
+    // PINCODE VALIDATION
+    // ===================================================
+
+    if (
+      !/^[0-9]{6}$/.test(
+        address.pincode
+      )
+    ) {
+      alert(
+        "Please enter a valid 6-digit pincode."
+      );
+
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // =================================================
+      // CREATE HOMEKART ORDER
+      // =================================================
+
+      const backendOrder =
+        await createBackendOrder(
+          token
+        );
 
       console.log(
-        "Order response:",
-        data
+        "HOMEKART ORDER CREATED:",
+        backendOrder
       );
 
-      /*
-       * CHECK RESPONSE
-       */
+      // =================================================
+      // COD
+      // =================================================
 
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-          "Failed to create order"
+      if (
+        paymentMethod === "COD"
+      ) {
+        alert(
+          "Order placed successfully!"
         );
+
+        if (clearCart) {
+          clearCart();
+        } else {
+          localStorage.removeItem(
+            "homekart-cart"
+          );
+        }
+
+        navigate("/order");
+
+        return;
       }
 
-      /*
-       * SAVE LATEST ORDER
-       *
-       * Used by Order page.
-       */
+      // =================================================
+      // RAZORPAY
+      // =================================================
 
-      localStorage.setItem(
-        "latestOrder",
-        JSON.stringify(data.order)
-      );
+      if (
+        paymentMethod ===
+        "RAZORPAY"
+      ) {
+        await handleRazorpayPayment(
+          token,
+          backendOrder
+        );
 
-      /*
-       * CLEAR CART
-       */
+        alert(
+          "Payment successful! Order placed successfully."
+        );
 
-      clearCart();
+        if (clearCart) {
+          clearCart();
+        } else {
+          localStorage.removeItem(
+            "homekart-cart"
+          );
+        }
 
-      /*
-       * GO TO ORDER PAGE
-       */
+        navigate("/order");
 
-      navigate("/order");
-
+        return;
+      }
     } catch (error) {
-
       console.error(
         "PLACE ORDER ERROR:",
         error
       );
 
-      setError(
+      alert(
         error.message ||
-        "Something went wrong while placing the order."
+          "Unable to place order."
       );
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
-  /*
-   * EMPTY CART
-   */
+  // =====================================================
+  // EMPTY CART
+  // =====================================================
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
-      <div className="checkout-empty">
+      <div className="checkout-page">
+        <div className="checkout-empty">
+          <h1>
+            Your Cart is Empty
+          </h1>
 
-        <h1>
-          Your Cart is Empty
-        </h1>
+          <p>
+            Please add products before
+            proceeding to checkout.
+          </p>
 
-        <p>
-          Please add products before checkout.
-        </p>
-
-        <button
-          onClick={() =>
-            navigate("/products")
-          }
-        >
-          Continue Shopping
-        </button>
-
+          <Link
+            to="/products"
+            className="continue-shopping"
+          >
+            Continue Shopping
+          </Link>
+        </div>
       </div>
     );
   }
 
+  // =====================================================
+  // PAGE
+  // =====================================================
+
   return (
     <div className="checkout-page">
 
-      <h1>
-        Checkout
-      </h1>
+      <div className="checkout-container">
 
-      <div className="checkout-layout">
+        {/* =========================================
+            LEFT SIDE
+        ========================================== */}
 
-        {/* =========================
-            CUSTOMER DETAILS
-        ========================= */}
-
-        <div className="checkout-form-container">
+        <form
+          className="checkout-left"
+          onSubmit={handleSubmit}
+        >
 
           <h2>
             Delivery Address
           </h2>
 
-          {/* ERROR */}
+          {/* NAME */}
 
-          {error && (
-            <div className="checkout-error">
-              {error}
-            </div>
-          )}
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            value={address.name}
+            onChange={handleChange}
+          />
 
-          <form onSubmit={handleSubmit}>
+          {/* PHONE */}
 
-            {/* FULL NAME */}
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone Number"
+            value={address.phone}
+            onChange={handleChange}
+            maxLength={10}
+          />
 
-            <div className="checkout-field">
+          {/* ADDRESS */}
 
-              <label>
-                Full Name
-              </label>
+          <textarea
+            name="address"
+            placeholder="Full Address"
+            rows={4}
+            value={address.address}
+            onChange={handleChange}
+          />
 
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                required
-              />
+          {/* CITY */}
 
-            </div>
+          <input
+            type="text"
+            name="city"
+            placeholder="City"
+            value={address.city}
+            onChange={handleChange}
+          />
 
-            {/* MOBILE */}
+          {/* STATE */}
 
-            <div className="checkout-field">
+          <input
+            type="text"
+            name="state"
+            placeholder="State"
+            value={address.state}
+            onChange={handleChange}
+          />
 
-              <label>
-                Mobile Number
-              </label>
+          {/* PINCODE */}
 
-              <input
-                type="tel"
-                name="mobile"
-                value={formData.mobile}
-                onChange={handleChange}
-                placeholder="10-digit mobile number"
-                maxLength="10"
-                inputMode="numeric"
-                required
-              />
+          <input
+            type="text"
+            name="pincode"
+            placeholder="Pincode"
+            value={address.pincode}
+            onChange={handleChange}
+            maxLength={6}
+          />
 
-            </div>
+          {/* =====================================
+              PAYMENT
+          ====================================== */}
 
-            {/* ADDRESS */}
+          <h2>
+            Payment Method
+          </h2>
 
-            <div className="checkout-field">
+          {/* COD */}
 
-              <label>
-                Address
-              </label>
+          <label className="payment-option">
 
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="House number, street, area"
-                rows="4"
-                required
-              />
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="COD"
+              checked={
+                paymentMethod === "COD"
+              }
+              onChange={(event) =>
+                setPaymentMethod(
+                  event.target.value
+                )
+              }
+            />
 
-            </div>
-
-            {/* CITY + STATE */}
-
-            <div className="checkout-row">
-
-              <div className="checkout-field">
-
-                <label>
-                  City
-                </label>
-
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="City"
-                  required
-                />
-
-              </div>
-
-              <div className="checkout-field">
-
-                <label>
-                  State
-                </label>
-
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  placeholder="State"
-                  required
-                />
-
-              </div>
-
-            </div>
-
-            {/* PINCODE */}
-
-            <div className="checkout-field">
-
-              <label>
-                Pincode
-              </label>
-
-              <input
-                type="text"
-                name="pincode"
-                value={formData.pincode}
-                onChange={handleChange}
-                placeholder="6-digit pincode"
-                maxLength="6"
-                inputMode="numeric"
-                required
-              />
-
-            </div>
-
-            {/* =========================
-                PAYMENT
-            ========================= */}
-
-            <h2 className="payment-title">
-              Payment Method
-            </h2>
-
-            <div className="payment-options">
-
-              {/* CASH ON DELIVERY */}
-
-              <label>
-
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="Cash on Delivery"
-                  checked={
-                    formData.paymentMethod ===
-                    "Cash on Delivery"
-                  }
-                  onChange={handleChange}
-                />
-
+            <div>
+              <strong>
                 Cash on Delivery
+              </strong>
 
-              </label>
-
-              {/* ONLINE PAYMENT */}
-
-              <label>
-
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="Online Payment"
-                  checked={
-                    formData.paymentMethod ===
-                    "Online Payment"
-                  }
-                  onChange={handleChange}
-                />
-
-                Online Payment
-
-              </label>
-
+              <p>
+                Pay when your order
+                is delivered.
+              </p>
             </div>
 
-            {/* PLACE ORDER */}
+          </label>
 
-            <button
-              type="submit"
-              className="place-order-button"
-              disabled={loading}
-            >
+          {/* RAZORPAY */}
 
-              {loading
-                ? "Placing Order..."
-                : "Place Order"}
+          <label className="payment-option">
 
-            </button>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="RAZORPAY"
+              checked={
+                paymentMethod ===
+                "RAZORPAY"
+              }
+              onChange={(event) =>
+                setPaymentMethod(
+                  event.target.value
+                )
+              }
+            />
 
-          </form>
+            <div>
+              <strong>
+                Online Payment
+              </strong>
 
-        </div>
+              <p>
+                Pay securely using
+                Razorpay.
+              </p>
+            </div>
 
-        {/* =========================
-            ORDER SUMMARY
-        ========================= */}
+          </label>
 
-        <div className="checkout-summary">
+          {/* =====================================
+              PLACE ORDER BUTTON
+          ====================================== */}
+
+          <button
+            type="submit"
+            className="place-order-btn"
+            disabled={loading}
+          >
+            {loading
+              ? "Processing..."
+              : paymentMethod ===
+                "RAZORPAY"
+              ? `Pay ₹${finalTotal.toLocaleString(
+                  "en-IN"
+                )}`
+              : `Place Order • ₹${finalTotal.toLocaleString(
+                  "en-IN"
+                )}`}
+          </button>
+
+        </form>
+
+        {/* =========================================
+            RIGHT SIDE
+        ========================================== */}
+
+        <div className="checkout-right">
 
           <h2>
             Order Summary
@@ -486,85 +790,132 @@ function Checkout() {
 
           {/* PRODUCTS */}
 
-          <div className="checkout-items">
+          {items.map(
+            (item, index) => {
+              const price =
+                Number(
+                  item.finalPrice ??
+                    item.price ??
+                    0
+                );
 
-            {cartItems.map((item) => (
+              const quantity =
+                Number(
+                  item.quantity || 1
+                );
 
-              <div
-                className="checkout-item"
-                key={item._id}
-              >
+              const itemTotal =
+                price * quantity;
 
-                <div>
+              return (
+                <div
+                  className="summary-item"
+                  key={
+                    item._id ||
+                    index
+                  }
+                >
 
-                  <strong>
-                    {item.name}
-                  </strong>
+                  <img
+                    src={
+                      item.image ||
+                      "https://via.placeholder.com/80"
+                    }
+                    alt={
+                      item.name
+                    }
+                  />
 
-                  <p>
-                    Qty: {item.quantity}
-                  </p>
+                  <div>
+                    <h4>
+                      {item.name}
+                    </h4>
+
+                    <p>
+                      ₹
+                      {price.toLocaleString(
+                        "en-IN"
+                      )}{" "}
+                      × {quantity}
+                    </p>
+                  </div>
+
+                  <span>
+                    ₹
+                    {itemTotal.toLocaleString(
+                      "en-IN"
+                    )}
+                  </span>
 
                 </div>
-
-                <strong>
-                  ₹
-                  {Number(item.price) *
-                    Number(item.quantity)}
-                </strong>
-
-              </div>
-
-            ))}
-
-          </div>
+              );
+            }
+          )}
 
           <hr />
 
           {/* SUBTOTAL */}
 
-          <div className="checkout-summary-row">
+          <div className="price-row">
 
             <span>
               Subtotal
             </span>
 
             <strong>
-              ₹{cartTotal}
+              ₹
+              {totalPrice.toLocaleString(
+                "en-IN"
+              )}
             </strong>
 
           </div>
 
           {/* DELIVERY */}
 
-          <div className="checkout-summary-row">
+          <div className="price-row">
 
             <span>
               Delivery
             </span>
 
             <strong>
-
               {deliveryCharge === 0
                 ? "FREE"
                 : `₹${deliveryCharge}`}
-
             </strong>
 
           </div>
 
-          <hr />
+          {/* FREE DELIVERY MESSAGE */}
+
+          {totalPrice > 0 &&
+            totalPrice < 500 && (
+              <p className="free-delivery-message">
+                Add ₹
+                {(
+                  500 - totalPrice
+                ).toLocaleString(
+                  "en-IN"
+                )}{" "}
+                more for FREE
+                delivery.
+              </p>
+            )}
 
           {/* TOTAL */}
 
-          <div className="checkout-total">
+          <div className="price-row total">
 
             <span>
               Total
             </span>
 
             <strong>
-              ₹{finalTotal}
+              ₹
+              {finalTotal.toLocaleString(
+                "en-IN"
+              )}
             </strong>
 
           </div>

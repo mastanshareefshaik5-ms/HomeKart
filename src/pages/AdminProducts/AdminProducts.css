@@ -1,112 +1,286 @@
-.admin-products {
-  min-height: 70vh;
-  padding: 40px;
-  background: #f5f5f5;
+.admin-products-page {
+  min-height: 100vh;
+  background: #f5f7fb;
+  padding: 30px;
 }
 
 .admin-products-header {
+  max-width: 1300px;
+  margin: 0 auto 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  gap: 20px;
 }
 
 .admin-products-header h1 {
   margin: 0;
-  font-size: 32px;
-  color: #111820;
+  color: #222;
+  font-size: 30px;
 }
 
 .admin-products-header p {
-  color: #666;
+  margin: 6px 0 0;
+  color: #777;
 }
 
-.add-product-btn {
-  background: #ff7200;
-  color: white;
-  border: none;
-  padding: 13px 22px;
-  border-radius: 7px;
-  font-size: 16px;
-  cursor: pointer;
+.admin-products-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.add-product-btn:hover {
-  background: #e65f00;
+.admin-products-page .admin-refresh-btn,
+.admin-products-page .admin-add-btn,
+.admin-products-page .admin-primary-btn,
+.admin-products-page .admin-delete-btn,
+.admin-products-page .admin-edit-btn {
+  box-sizing: border-box;
 }
 
-.products-table-container {
-  background: white;
+
+/* ================================
+   TABLE
+================================ */
+
+.admin-products-page .admin-table-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  background: #fff;
   border-radius: 12px;
   overflow-x: auto;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
 }
 
-.products-table {
+.admin-products-page .admin-table {
   width: 100%;
+  min-width: 1000px;
   border-collapse: collapse;
 }
 
-.products-table th {
-  background: #111820;
-  color: white;
-  padding: 16px;
-  text-align: left;
-}
-
-.products-table td {
+.admin-products-page .admin-table th {
   padding: 15px;
-  border-bottom: 1px solid #ddd;
+  background: #f1f3f5;
+  color: #333;
+  text-align: left;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.products-table tr:hover {
+.admin-products-page .admin-table td {
+  padding: 14px 15px;
+  border-top: 1px solid #eee;
+  color: #444;
+  vertical-align: middle;
+}
+
+.admin-products-page .admin-table tbody tr:hover {
   background: #fafafa;
 }
 
-.admin-product-image {
+
+/* ================================
+   PRODUCT IMAGE
+================================ */
+
+.admin-products-page .admin-product-image {
   width: 65px;
   height: 65px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 8px;
+  border: 1px solid #eee;
+  background: #fff;
+  padding: 5px;
+  box-sizing: border-box;
 }
 
-.edit-btn,
-.delete-btn {
+
+/* ================================
+   PRODUCT DETAILS
+================================ */
+
+.admin-products-page .admin-table td strong {
+  display: block;
+  color: #222;
+  font-size: 14px;
+}
+
+.admin-products-page .admin-table td small {
+  display: block;
+  margin-top: 4px;
+  color: #888;
+  font-size: 12px;
+}
+
+
+/* ================================
+   STOCK
+================================ */
+
+.admin-products-page .stock-good,
+.admin-products-page .stock-low,
+.admin-products-page .stock-out {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-products-page .stock-good {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.admin-products-page .stock-low {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+.admin-products-page .stock-out {
+  background: #f8d7da;
+  color: #842029;
+}
+
+
+/* ================================
+   STATUS
+================================ */
+
+.admin-products-page .status-active,
+.admin-products-page .status-inactive {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-products-page .status-active {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.admin-products-page .status-inactive {
+  background: #f8d7da;
+  color: #842029;
+}
+
+
+/* ================================
+   ACTIONS
+================================ */
+
+.admin-products-page .admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.admin-products-page .admin-edit-btn {
+  display: inline-block;
+  background: #0d6efd;
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-products-page .admin-edit-btn:hover {
+  background: #0b5ed7;
+}
+
+.admin-products-page .admin-delete-btn {
   border: none;
-  padding: 8px 13px;
+  background: #dc3545;
+  color: #fff;
+  padding: 7px 12px;
   border-radius: 5px;
   cursor: pointer;
-  margin-right: 6px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.edit-btn {
-  background: #2196f3;
-  color: white;
+.admin-products-page .admin-delete-btn:hover {
+  background: #bb2d3b;
 }
 
-.delete-btn {
-  background: #e53935;
-  color: white;
+.admin-products-page .admin-delete-btn:disabled,
+.admin-products-page .admin-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.admin-loading,
-.admin-empty {
-  background: white;
-  padding: 40px;
+
+/* ================================
+   LOADING
+================================ */
+
+.admin-products-page .admin-loading {
+  max-width: 1300px;
+  margin: 40px auto;
+  padding: 50px 20px;
   text-align: center;
-  border-radius: 10px;
+  background: #fff;
+  border-radius: 12px;
+  color: #555;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
 }
 
-@media (max-width: 700px) {
 
-  .admin-products {
-    padding: 20px;
+/* ================================
+   EMPTY
+================================ */
+
+.admin-products-page .admin-empty {
+  max-width: 700px;
+  margin: 50px auto;
+  padding: 45px 25px;
+  text-align: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+}
+
+.admin-products-page .admin-empty h2 {
+  margin: 0 0 8px;
+  color: #222;
+}
+
+.admin-products-page .admin-empty p {
+  margin: 0 0 20px;
+  color: #777;
+}
+
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 800px) {
+
+  .admin-products-page {
+    padding: 15px;
   }
 
   .admin-products-header {
-    flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    flex-direction: column;
   }
 
+  .admin-products-header-actions {
+    width: 100%;
+  }
+
+  .admin-products-header-actions
+    .admin-refresh-btn,
+  .admin-products-header-actions
+    .admin-add-btn {
+    flex: 1;
+    text-align: center;
+  }
 }

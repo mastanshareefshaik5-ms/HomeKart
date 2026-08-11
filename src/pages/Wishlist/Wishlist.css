@@ -387,3 +387,83 @@
   }
 
 }
+/* ==========================================
+   WISHLIST BUTTON
+========================================== */
+
+.product-image-container {
+  position: relative;
+}
+
+
+/* HEART BUTTON */
+
+.wishlist-button {
+
+  position: absolute;
+
+  top: 12px;
+  right: 12px;
+
+  width: 42px;
+  height: 42px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: white;
+
+  color: #777;
+
+  font-size: 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.15);
+
+  transition:
+    0.2s ease;
+
+  z-index: 5;
+}
+
+
+/* HOVER */
+
+.wishlist-button:hover {
+
+  transform: scale(1.1);
+
+  color: #e53935;
+
+}
+
+
+/* ACTIVE */
+
+.wishlist-button.active {
+
+  background: #ffebee;
+
+  color: #e53935;
+
+}
+
+
+/* ACTIVE HOVER */
+
+.wishlist-button.active:hover {
+
+  background: #e53935;
+
+  color: white;
+
+}

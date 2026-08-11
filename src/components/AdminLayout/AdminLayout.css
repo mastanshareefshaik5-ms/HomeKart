@@ -1,0 +1,127 @@
+.admin-layout {
+  min-height: 100vh;
+  background: #f5f6f8;
+}
+
+
+/* =========================================
+   ADMIN NAVBAR
+========================================= */
+
+.admin-navbar {
+  width: 100%;
+  min-height: 80px;
+
+  background: #111827;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 40px;
+  box-sizing: border-box;
+}
+
+
+.admin-logo {
+  font-size: 26px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+
+.admin-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+
+.admin-nav-links a {
+  color: white;
+  text-decoration: none;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  transition: 0.2s;
+}
+
+
+.admin-nav-links a:hover {
+  color: #ff7a00;
+}
+
+
+.admin-logout-btn {
+  border: none;
+  background: #dc3545;
+  color: white;
+
+  padding: 11px 18px;
+
+  border-radius: 6px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  cursor: pointer;
+}
+
+
+.admin-logout-btn:hover {
+  background: #bb2d3b;
+}
+
+
+/* =========================================
+   ADMIN CONTENT
+========================================= */
+
+.admin-content {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .admin-navbar {
+    flex-direction: column;
+    gap: 20px;
+
+    padding: 20px;
+  }
+
+
+  .admin-nav-links {
+    width: 100%;
+
+    flex-wrap: wrap;
+    justify-content: center;
+
+    gap: 15px;
+  }
+
+
+  .admin-content {
+    padding: 20px 12px;
+  }
+
+}

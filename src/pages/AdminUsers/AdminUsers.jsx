@@ -1,157 +1,302 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./AdminUsers.css";
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000";
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const getToken = () => {
-    return (
-      localStorage.getItem("token") ||
-      localStorage.getItem("authToken")
-    );
-  };
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      setError("");
 
-      const token = getToken();
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Please login again");
+      }
 
       const response = await fetch(
-        "http://localhost:5000/api/auth/users",
+        `${API_URL}/api/users`,
         {
+          method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
       const data = await response.json();
 
+      console.log("ADMIN USERS RESPONSE:", data);
+
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to fetch users"
+          data.message ||
+            "Failed to fetch users"
         );
       }
 
-      setUsers(
-        Array.isArray(data)
-          ? data
-          : data.users || []
+      if (Array.isArray(data.users)) {
+        setUsers(data.users);
+      } else if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error(
+        "ADMIN USERS ERROR:",
+        error
       );
 
-    } catch (error) {
-      console.error("Users error:", error);
-      setError(error.message);
+      alert(
+        error.message ||
+          "Unable to load users"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+
   useEffect(() => {
     fetchUsers();
   }, []);
 
+
+  const handleDelete = async (userId) => {
+    const confirmDelete =
+      window.confirm(
+        "Are you sure you want to delete this user?"
+      );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      setDeletingId(userId);
+
+      const token =
+        localStorage.getItem("token");
+
+      const response = await fetch(
+        `${API_URL}/api/users/${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Failed to delete user"
+        );
+      }
+
+      setUsers((previous) =>
+        previous.filter(
+          (user) =>
+            user._id !== userId
+        )
+      );
+
+      alert(
+        "User deleted successfully"
+      );
+    } catch (error) {
+      console.error(
+        "DELETE USER ERROR:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to delete user"
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+
+  if (loading) {
+    return (
+      <div className="admin-users-page">
+
+        <div className="admin-users-loading">
+          Loading users...
+        </div>
+
+      </div>
+    );
+  }
+
+
   return (
-    <div className="admin-users">
+    <div className="admin-users-page">
+
+      {/* =====================================
+          USERS HEADER
+      ====================================== */}
 
       <div className="admin-users-header">
 
         <div>
-          <h1>Manage Users</h1>
+          <h1>
+            Manage Users
+          </h1>
+
           <p>
-            View registered HOMEKART customers.
+            View registered HOMEKART
+            customers.
           </p>
         </div>
 
         <button
-          className="refresh-users-btn"
+          type="button"
+          className="admin-users-refresh"
           onClick={fetchUsers}
         >
-          🔄 Refresh
+          ↻ Refresh
         </button>
 
       </div>
 
-      {loading && (
-        <div className="admin-users-message">
-          Loading users...
+
+      {/* =====================================
+          USERS
+      ====================================== */}
+
+      {users.length === 0 ? (
+
+        <div className="admin-users-empty">
+
+          <div className="admin-users-empty-icon">
+            👥
+          </div>
+
+          <h2>
+            No Users Found
+          </h2>
+
+          <p>
+            Registered customers will
+            appear here.
+          </p>
+
         </div>
-      )}
 
-      {!loading && error && (
-        <div className="admin-users-error">
-          <h3>Unable to load users</h3>
+      ) : (
 
-          <p>{error}</p>
+        <div className="admin-users-table-wrapper">
 
-          <button onClick={fetchUsers}>
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && users.length === 0 && (
-        <div className="admin-users-message">
-          No users found.
-        </div>
-      )}
-
-      {!loading && !error && users.length > 0 && (
-
-        <div className="users-table-container">
-
-          <table className="users-table">
+          <table className="admin-users-table">
 
             <thead>
+
               <tr>
-                <th>#</th>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Role</th>
                 <th>Joined</th>
+                <th>Action</th>
               </tr>
+
             </thead>
+
 
             <tbody>
 
-              {users.map((user, index) => (
+              {users.map((user) => (
 
                 <tr key={user._id}>
 
                   <td>
-                    {index + 1}
+                    {user.name ||
+                      "Customer"}
                   </td>
 
                   <td>
-                    {user.name || "N/A"}
+                    {user.email ||
+                      "-"}
                   </td>
 
                   <td>
-                    {user.email || "N/A"}
+                    {user.phone ||
+                      "-"}
                   </td>
 
                   <td>
+
                     <span
                       className={
                         user.role === "admin"
-                          ? "role-admin"
-                          : "role-user"
+                          ? "user-role admin"
+                          : "user-role customer"
                       }
                     >
-                      {user.role || "user"}
+                      {user.role ||
+                        "customer"}
                     </span>
+
                   </td>
 
                   <td>
                     {user.createdAt
                       ? new Date(
                           user.createdAt
-                        ).toLocaleDateString()
-                      : "N/A"}
+                        ).toLocaleDateString(
+                          "en-IN"
+                        )
+                      : "-"}
+                  </td>
+
+                  <td>
+
+                    {user.role === "admin" ? (
+
+                      <span className="admin-user-label">
+                        Admin
+                      </span>
+
+                    ) : (
+
+                      <button
+                        type="button"
+                        className="delete-user-btn"
+                        disabled={
+                          deletingId ===
+                          user._id
+                        }
+                        onClick={() =>
+                          handleDelete(
+                            user._id
+                          )
+                        }
+                      >
+                        {deletingId ===
+                        user._id
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
+
+                    )}
+
                   </td>
 
                 </tr>

@@ -1,215 +1,233 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Home.css";
 
 import Banner from "../../components/Banner/Banner";
 import ProductCard from "../../components/ProductCard/ProductCard";
 
 function Home() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    {
-      name: "Groceries",
-      icon: "🛒"
-    },
-    {
-      name: "Fruits & Vegetables",
-      icon: "🥦"
-    },
-    {
-      name: "Dairy Products",
-      icon: "🥛"
-    },
-    {
-      name: "Snacks",
-      icon: "🍪"
-    },
-    {
-      name: "Cleaning",
-      icon: "🧼"
-    },
-    {
-      name: "Personal Care",
-      icon: "🧴"
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        "http://localhost:5000/api/products"
+      );
+
+      const data = await res.json();
+
+      console.log("HOME PRODUCTS:", data);
+
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else if (Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        setProducts([]);
+      }
+    } catch (err) {
+      console.error("HOME PRODUCT ERROR:", err);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-
-  const products = [
-
-    {
-      id: "home-rice-5kg",
-      name: "Basmati Rice 5kg",
-      price: 650,
-      description:
-        "Premium quality basmati rice for your daily needs.",
-      rating: 4.7,
-      icon: "🍚"
-    },
-
-    {
-      id: "home-oil-1l",
-      name: "Sunflower Oil 1L",
-      price: 150,
-      description:
-        "Healthy and refined sunflower cooking oil.",
-      rating: 4.6,
-      icon: "🛢️"
-    },
-
-    {
-      id: "home-milk",
-      name: "Premium Milk",
-      price: 60,
-      description:
-        "Fresh and nutritious premium quality milk.",
-      rating: 4.8,
-      icon: "🥛"
-    },
-
-    {
-      id: "home-chocolate",
-      name: "Chocolate Snacks",
-      price: 120,
-      description:
-        "Delicious chocolate snacks for everyone.",
-      rating: 4.5,
-      icon: "🍫"
-    }
-
-  ];
-
-
-  // ==========================================
-  // CATEGORY CLICK
-  // ==========================================
-
-  const handleCategoryClick = (category) => {
-
-    window.location.href =
-      `/products?category=${encodeURIComponent(category)}`;
-
   };
 
+ const bestProducts = products;
 
   return (
-
     <div className="home">
 
-
-      {/* =====================================
-          BANNER
-      ===================================== */}
-
+      {/* BANNER */}
       <Banner />
 
+      {/* HERO */}
+      <section className="hero-section">
 
-      {/* =====================================
-          HERO
-      ===================================== */}
+        <div className="hero-left">
 
-      <section className="hero">
+          <span className="offer">
+            HOMEKART PREMIUM
+          </span>
 
-        <h1>
-          Welcome to HOMEKART
-        </h1>
+          <h1>
+            Fresh Indian Spices
+            <br />
+            Delivered To Your Door
+          </h1>
 
-        <p>
-          Your Daily Household Essentials
-          Delivered to Your Doorstep
-        </p>
+          <p>
+            Premium Quality Masalas
+            <br />
+            Fast Delivery
+            <br />
+            Secure Payments
+          </p>
 
-        <button
-          onClick={() =>
-            window.location.href =
-              "/products"
-          }
-        >
-          Shop Now
-        </button>
+          <div className="hero-buttons">
 
-      </section>
+            <Link
+              to="/products"
+              className="shop-btn"
+            >
+              Shop Now
+            </Link>
 
+            <Link
+              to="/products"
+              className="category-btn"
+            >
+              Explore Products
+            </Link>
 
-      {/* =====================================
-          CATEGORIES
-      ===================================== */}
+          </div>
 
-      <section className="categories">
+        </div>
 
-        <h2>
-          Shop by Category
-        </h2>
+        <div className="hero-right">
 
-
-        <div className="category-grid">
-
-          {categories.map(
-            (item) => (
-
-              <div
-                className="category-card"
-                key={item.name}
-                onClick={() =>
-                  handleCategoryClick(
-                    item.name
-                  )
-                }
-              >
-
-                <div className="category-icon">
-
-                  {item.icon}
-
-                </div>
-
-                <h3>
-
-                  {item.name}
-
-                </h3>
-
-              </div>
-
-            )
-          )}
+          <img
+            src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=700"
+            alt="HOMEKART Products"
+          />
 
         </div>
 
       </section>
 
+      {/* FEATURES */}
+      <section className="features">
 
-      {/* =====================================
-          BEST SELLERS
-      ===================================== */}
+        <div className="feature-card">
+          🚚
 
-      <section className="products">
+          <h3>
+            Free Delivery
+          </h3>
 
-        <h2>
-          🔥 Best Sellers
-        </h2>
+          <p>
+            On Orders Above ₹499
+          </p>
+        </div>
 
+        <div className="feature-card">
+          🔒
 
-        <div className="product-grid">
+          <h3>
+            Secure Payment
+          </h3>
 
-          {products.map(
-            (item) => (
+          <p>
+            Razorpay Protected
+          </p>
+        </div>
+
+        <div className="feature-card">
+          ⭐
+
+          <h3>
+            Premium Quality
+          </h3>
+
+          <p>
+            Trusted Products
+          </p>
+        </div>
+
+        <div className="feature-card">
+          ↩
+
+          <h3>
+            Easy Returns
+          </h3>
+
+          <p>
+            Within 7 Days
+          </p>
+        </div>
+
+      </section>
+
+      {/* PRODUCTS */}
+      <section className="product-section">
+
+        <div className="title">
+
+          <h2>
+            Best Selling Products
+          </h2>
+
+          <Link to="/products">
+            View All Products →
+          </Link>
+
+        </div>
+
+        {loading ? (
+
+          <h3>
+            Loading products...
+          </h3>
+
+        ) : bestProducts.length === 0 ? (
+
+          <div className="products-message">
+
+            <h3>
+              No Products Available
+            </h3>
+
+            <p>
+              Please check back later.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="product-grid">
+
+            {bestProducts.map((product) => (
 
               <ProductCard
-                key={item.id}
-                product={item}
+                key={product._id}
+                product={product}
               />
 
-            )
-          )}
+            ))}
 
-        </div>
+          </div>
+
+        )}
 
       </section>
 
+      {/* ABOUT */}
+      <section className="about-home">
+
+        <h2>
+          Why Choose HOMEKART?
+        </h2>
+
+        <p>
+          HOMEKART delivers premium quality
+          products directly from trusted
+          suppliers. Every order is packed
+          with care to ensure freshness,
+          quality and authentic taste.
+        </p>
+
+      </section>
 
     </div>
-
   );
-
 }
 
 export default Home;

@@ -1,44 +1,142 @@
 import "./Footer.css";
 
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaLinkedinIn,
+  FaTwitter,
+  FaPhoneAlt,
+  FaEnvelope,
+  FaMapMarkerAlt
+} from "react-icons/fa";
+
+import { Link } from "react-router-dom";
+
 function Footer() {
+
+  const year = new Date().getFullYear();
+
   return (
+
     <footer className="footer">
 
-      <div className="footer-section">
-        <h3>HOMEKART</h3>
-        <p>
-          Your trusted online store for daily household essentials.
-        </p>
+      <div className="footer-container">
+
+        {/* COMPANY */}
+
+        <div className="footer-column">
+
+          <h2>HOMEKART</h2>
+
+          <p>
+
+            HOMEKART is an online grocery store delivering premium spices,
+            household essentials and quality products at affordable prices.
+
+          </p>
+
+          <div className="footer-social">
+
+            <a href="#">
+              <FaFacebookF />
+            </a>
+
+            <a href="#">
+              <FaInstagram />
+            </a>
+
+            <a href="#">
+              <FaTwitter />
+            </a>
+
+            <a href="#">
+              <FaLinkedinIn />
+            </a>
+
+          </div>
+
+        </div>
+
+        {/* QUICK LINKS */}
+
+        <div className="footer-column">
+
+          <h3>Quick Links</h3>
+
+          <Link to="/">Home</Link>
+
+          <Link to="/products">Products</Link>
+
+          <Link to="/categories">Categories</Link>
+
+          <Link to="/wishlist">Wishlist</Link>
+
+          <Link to="/cart">Cart</Link>
+
+        </div>
+
+        {/* CUSTOMER */}
+
+        <div className="footer-column">
+
+          <h3>Customer Service</h3>
+
+          <Link to="/profile">My Account</Link>
+
+          <Link to="/order">My Orders</Link>
+
+          <Link to="/contact">Contact Us</Link>
+
+          <Link to="/about">About Us</Link>
+
+          <Link to="/faq">FAQ</Link>
+
+        </div>
+
+        {/* CONTACT */}
+
+        <div className="footer-column">
+
+          <h3>Contact</h3>
+
+          <p>
+
+            <FaPhoneAlt />
+
+            +91 9959820059
+
+          </p>
+
+          <p>
+
+            <FaEnvelope />
+
+            johnsaida374@gmail.com
+
+          </p>
+
+          <p>
+
+            <FaMapMarkerAlt />
+
+            Guntur, Andhra Pradesh
+
+          </p>
+
+        </div>
+
       </div>
 
+      <div className="footer-bottom">
 
-      <div className="footer-section">
-        <h3>Quick Links</h3>
-        <p>Home</p>
-        <p>Products</p>
-        <p>Cart</p>
-        <p>Orders</p>
+        © {year} HOMEKART. All Rights Reserved.
+
       </div>
-
-
-      <div className="footer-section">
-        <h3>Customer Support</h3>
-        <p>Contact Us</p>
-        <p>Help Center</p>
-        <p>Returns</p>
-      </div>
-
-
-      <div className="footer-section">
-        <h3>Follow Us</h3>
-        <p>Facebook</p>
-        <p>Instagram</p>
-        <p>Twitter</p>
-      </div>
-
 
     </footer>
+
   );
+
 }
 
 export default Footer;

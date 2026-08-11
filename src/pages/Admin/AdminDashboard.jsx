@@ -1,174 +1,260 @@
-import { useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
-import { AuthContext } from "../../context/AuthContext";
-
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Admin.css";
 
 function AdminDashboard() {
-  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0,
+    totalRevenue: 0
+  });
 
-  const { user, logout } = useContext(AuthContext);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-  if (!user) {
-    return (
-      <div className="admin-message">
-        <h2>Please login first.</h2>
+        const response = await fetch(
+          "http://localhost:5000/api/orders/stats",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
 
-        <Link to="/login">
-          Go to Login
-        </Link>
-      </div>
-    );
-  }
+        const data = await response.json();
 
-  if (user.role !== "admin") {
-    return (
-      <div className="admin-message">
-        <h2>Access Denied</h2>
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Failed to load dashboard"
+          );
+        }
 
-        <p>
-          You do not have administrator permission.
-        </p>
+        const result = data.stats || data;
 
-        <Link to="/">
-          Go to Home
-        </Link>
-      </div>
-    );
-  }
+        setStats({
+          totalOrders:
+            result.totalOrders || 0,
+
+          deliveredOrders:
+            result.deliveredOrders || 0,
+
+          cancelledOrders:
+            result.cancelledOrders || 0,
+
+          totalRevenue:
+            result.totalRevenue || 0
+        });
+      } catch (error) {
+        console.error(
+          "ADMIN DASHBOARD ERROR:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
-    <div className="admin-page">
+    <div className="admin-dashboard">
 
-      <aside className="admin-sidebar">
+      <div className="admin-dashboard-header">
 
-        <div className="admin-logo">
-          🏠 HOMEKART
-        </div>
+        <h1>Admin Dashboard</h1>
 
-        <div className="admin-title">
-          Admin Panel
-        </div>
+        <p>
+          Welcome to HOMEKART administration
+        </p>
 
-        <nav>
-
-          <Link to="/admin">
-            📊 Dashboard
-          </Link>
-
-          <Link to="/admin/products">
-            📦 Products
-          </Link>
-
-          <Link to="/admin/orders">
-            🛒 Orders
-          </Link>
-
-          <Link to="/admin/users">
-            👥 Users
-          </Link>
-
-        </nav>
-
-        <button
-          className="admin-logout"
-          onClick={handleLogout}
-        >
-          🚪 Logout
-        </button>
-
-      </aside>
+      </div>
 
 
-      <main className="admin-content">
+      <div className="admin-stat-grid">
 
-        <div className="admin-header">
+        <div className="admin-stat-card">
+
+          <span>📦</span>
 
           <div>
-            <h1>
-              Admin Dashboard
-            </h1>
+
+            <h3>
+              {loading
+                ? "..."
+                : stats.totalOrders}
+            </h3>
+
+            <p>Total Orders</p>
+
+          </div>
+
+        </div>
+
+
+        <div className="admin-stat-card">
+
+          <span>🚚</span>
+
+          <div>
+
+            <h3>
+              {loading
+                ? "..."
+                : stats.deliveredOrders}
+            </h3>
+
+            <p>Delivered Orders</p>
+
+          </div>
+
+        </div>
+
+
+        <div className="admin-stat-card">
+
+          <span>❌</span>
+
+          <div>
+
+            <h3>
+              {loading
+                ? "..."
+                : stats.cancelledOrders}
+            </h3>
+
+            <p>Cancelled Orders</p>
+
+          </div>
+
+        </div>
+
+
+        <div className="admin-stat-card">
+
+          <span>💰</span>
+
+          <div>
+
+            <h3>
+              {loading
+                ? "..."
+                : `₹${Number(
+                    stats.totalRevenue
+                  ).toLocaleString("en-IN")}`}
+            </h3>
+
+            <p>Total Revenue</p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div className="admin-dashboard-section">
+
+        <h2>Quick Management</h2>
+
+        <div className="admin-action-grid">
+
+          <Link
+            to="/admin/products"
+            className="admin-action-card"
+          >
+
+            <span>🛍️</span>
+
+            <h3>Products</h3>
 
             <p>
-              Welcome, {user.name}
+              Add, edit and manage products
             </p>
-          </div>
 
-          <div className="admin-user">
-            👨‍💼 {user.email}
-          </div>
-
-        </div>
+          </Link>
 
 
-        <div className="admin-cards">
+          <Link
+            to="/admin/orders"
+            className="admin-action-card"
+          >
 
-          <div className="admin-card">
             <span>📦</span>
-            <h2>Products</h2>
-            <p>Manage HOMEKART products</p>
 
-            <Link to="/admin/products">
-              Manage Products
-            </Link>
-          </div>
+            <h3>Orders</h3>
 
+            <p>
+              View and update customer orders
+            </p>
 
-          <div className="admin-card">
-            <span>🛒</span>
-            <h2>Orders</h2>
-            <p>View customer orders</p>
-
-            <Link to="/admin/orders">
-              View Orders
-            </Link>
-          </div>
+          </Link>
 
 
-          <div className="admin-card">
+          <Link
+            to="/admin/users"
+            className="admin-action-card"
+          >
+
             <span>👥</span>
-            <h2>Users</h2>
-            <p>Manage registered users</p>
 
-            <Link to="/admin/users">
-              View Users
-            </Link>
-          </div>
+            <h3>Users</h3>
+
+            <p>
+              View registered customers
+            </p>
+
+          </Link>
 
 
-          <div className="admin-card">
+          <Link
+            to="/admin/reports"
+            className="admin-action-card"
+          >
+
             <span>📊</span>
-            <h2>Reports</h2>
-            <p>HOMEKART business overview</p>
 
-            <button>
-              View Reports
-            </button>
-          </div>
+            <h3>Reports</h3>
 
-        </div>
+            <p>
+              View HOMEKART business reports
+            </p>
 
-
-        <div className="admin-welcome">
-
-          <h2>
-            HOMEKART Administration
-          </h2>
-
-          <p>
-            From this dashboard you can manage
-            products, orders and customers.
-          </p>
+          </Link>
 
         </div>
 
-      </main>
+      </div>
+
+
+      <div className="admin-dashboard-section">
+
+        <h2>Product Management</h2>
+
+        <div className="admin-product-actions">
+
+          <Link
+            to="/admin/products"
+            className="admin-primary-btn"
+          >
+            Manage Products
+          </Link>
+
+          <Link
+            to="/admin/products/add"
+            className="admin-add-btn"
+          >
+            + Add Product
+          </Link>
+
+        </div>
+
+      </div>
 
     </div>
   );

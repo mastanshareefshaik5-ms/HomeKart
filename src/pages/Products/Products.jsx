@@ -1,259 +1,105 @@
 import { useEffect, useState, useContext } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import axios from "axios";
-
-import {
-  FaShoppingCart,
-  FaStar,
-  FaSearch
-} from "react-icons/fa";
-
+import { Link } from "react-router-dom";
 import { CartContext } from "../../context/CartContext";
-
 import "./Products.css";
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000";
+
 function Products() {
-
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [searchText, setSearchText] =
-    useState("");
-
-  const [searchParams, setSearchParams] =
-    useSearchParams();
-
-  const selectedCategory =
-    searchParams.get("category") || "All";
-
-  const { addToCart } =
-    useContext(CartContext);
-
-
-  // ==========================================
-  // FETCH PRODUCTS
-  // ==========================================
+  const { addToCart } = useContext(CartContext);
 
   useEffect(() => {
-
-    let mounted = true;
-
-    const fetchProducts = async () => {
-
-      try {
-
-        const response = await axios.get(
-          "http://localhost:5000/api/products"
-        );
-
-        if (mounted) {
-
-          setProducts(
-            Array.isArray(response.data)
-              ? response.data
-              : []
-          );
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          "PRODUCT FETCH ERROR:",
-          error
-        );
-
-        if (mounted) {
-
-          setError(
-            "Unable to load products"
-          );
-
-        }
-
-      } finally {
-
-        if (mounted) {
-          setLoading(false);
-        }
-
-      }
-
-    };
-
     fetchProducts();
-
-    return () => {
-      mounted = false;
-    };
-
   }, []);
 
-
-  // ==========================================
-  // SEARCH + CATEGORY FILTER
-  // ==========================================
-
-  const filteredProducts =
-    products.filter((product) => {
-
-      const categoryMatch =
-        selectedCategory === "All" ||
-        product.category?.toLowerCase() ===
-        selectedCategory.toLowerCase();
-
-
-      const searchMatch =
-        product.name
-          ?.toLowerCase()
-          .includes(
-            searchText.toLowerCase()
-          ) ||
-
-        product.brand
-          ?.toLowerCase()
-          .includes(
-            searchText.toLowerCase()
-          ) ||
-
-        product.description
-          ?.toLowerCase()
-          .includes(
-            searchText.toLowerCase()
-          );
-
-
-      return (
-        categoryMatch &&
-        searchMatch
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products`
       );
 
-    });
+      const data = await response.json();
 
+      console.log("PRODUCTS:", data);
 
-  // ==========================================
-  // CATEGORY CHANGE
-  // ==========================================
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to load products"
+        );
+      }
 
-  const handleCategoryChange = (
-    event
-  ) => {
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else if (Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        setProducts([]);
+      }
 
-    const category =
-      event.target.value;
+    } catch (error) {
+      console.error(
+        "PRODUCT FETCH ERROR:",
+        error
+      );
 
-    if (category === "All") {
+      alert(
+        error.message ||
+          "Unable to load products"
+      );
 
-      setSearchParams({});
-
-    } else {
-
-      setSearchParams({
-        category
-      });
-
+    } finally {
+      setLoading(false);
     }
-
   };
 
-
-  // ==========================================
-  // IMAGE URL
-  // ==========================================
-
-  const getImageUrl = (image) => {
-
+  const getFinalPrice = (product) => {
     if (
-      !image ||
-      typeof image !== "string"
+      product.finalPrice !== undefined &&
+      product.finalPrice !== null
     ) {
-
-      return "/default-product.png";
-
+      return Number(product.finalPrice);
     }
 
-    const cleanImage =
-      image.trim();
+    const price =
+      Number(product.price) || 0;
 
-    if (cleanImage === "") {
+    const discount =
+      Number(product.discount) || 0;
 
-      return "/default-product.png";
-
-    }
-
-    if (
-      cleanImage.startsWith("http://") ||
-      cleanImage.startsWith("https://")
-    ) {
-
-      return cleanImage;
-
-    }
-
-    if (
-      cleanImage.startsWith("/")
-    ) {
-
-      return cleanImage;
-
-    }
-
-    return `/${cleanImage}`;
-
+    return (
+      price -
+      (price * discount) / 100
+    );
   };
 
+  const handleAddToCart = (product) => {
+    addToCart(product);
 
-  // ==========================================
-  // LOADING
-  // ==========================================
+    alert(
+      `${product.name} added to cart`
+    );
+  };
 
   if (loading) {
-
     return (
-
-      <div className="products-message">
-
-        Loading products...
-
+      <div className="products-page">
+        <div className="products-message">
+          Loading products...
+        </div>
       </div>
-
     );
-
   }
-
-
-  // ==========================================
-  // ERROR
-  // ==========================================
-
-  if (error) {
-
-    return (
-
-      <div className="products-message error">
-
-        {error}
-
-      </div>
-
-    );
-
-  }
-
 
   return (
-
     <div className="products-page">
 
-
-      {/* ======================================
-          HEADER
-      ====================================== */}
+      {/* HEADER */}
 
       <div className="products-header">
 
@@ -262,276 +108,163 @@ function Products() {
         </h1>
 
         <p>
-          Everyday household essentials
-          at great prices
+          Quality products at
+          affordable prices
         </p>
 
-
-        {/* SEARCH */}
-
-        <div className="product-search">
-
-          <FaSearch />
-
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchText}
-            onChange={(event) =>
-              setSearchText(
-                event.target.value
-              )
-            }
-          />
-
-        </div>
-
-
-        {/* CATEGORY */}
-
-        <div className="category-filter">
-
-          <label>
-            Category:
-          </label>
-
-          <select
-            value={selectedCategory}
-            onChange={
-              handleCategoryChange
-            }
-          >
-
-            <option value="All">
-              All Products
-            </option>
-
-            <option value="Groceries">
-              Groceries
-            </option>
-
-            <option value="Fruits & Vegetables">
-              Fruits & Vegetables
-            </option>
-
-            <option value="Dairy Products">
-              Dairy Products
-            </option>
-
-            <option value="Snacks">
-              Snacks
-            </option>
-
-            <option value="Cleaning">
-              Cleaning
-            </option>
-
-            <option value="Personal Care">
-              Personal Care
-            </option>
-
-          </select>
-
-        </div>
-
       </div>
 
 
-      {/* ======================================
-          PRODUCT COUNT
-      ====================================== */}
+      {/* NO PRODUCTS */}
 
-      <div className="product-count">
-
-        {filteredProducts.length} product
-        {filteredProducts.length !== 1
-          ? "s"
-          : ""} found
-
-      </div>
-
-
-      {/* ======================================
-          NO PRODUCTS
-      ====================================== */}
-
-      {filteredProducts.length === 0 ? (
+      {products.length === 0 ? (
 
         <div className="products-message">
 
           <h2>
-            No products found
+            No Products Available
           </h2>
 
           <p>
-            Try another product name or
-            category.
+            Please check back later.
           </p>
 
         </div>
 
       ) : (
 
-
-        /* ====================================
-           PRODUCTS GRID
-        ==================================== */
+        /* PRODUCTS */
 
         <div className="products-grid">
 
-          {filteredProducts.map(
-            (product) => (
+          {products.map((product) => {
 
-              <Link
-                to={`/product-details/${product._id}`}
+            const price =
+              Number(product.price) || 0;
+
+            const finalPrice =
+              getFinalPrice(product);
+
+            const discount =
+              Number(product.discount) || 0;
+
+            const stock =
+              Number(product.stock) || 0;
+
+            return (
+
+              <div
                 className="product-card"
                 key={product._id}
               >
 
-
                 {/* IMAGE */}
 
-                <div className="product-image-container">
+                <Link
+                  to={`/products/${product._id}`}
+                  className="product-image-link"
+                >
 
                   <img
-                    src={getImageUrl(
-                      product.image
-                    )}
-                    alt={
-                      product.name ||
-                      "Product"
+                    src={
+                      product.image ||
+                      "https://via.placeholder.com/300"
                     }
+                    alt={product.name}
                     className="product-image"
-                    loading="lazy"
                     onError={(event) => {
-
-                      event.currentTarget.onerror =
-                        null;
-
                       event.currentTarget.src =
-                        "/default-product.png";
-
+                        "https://via.placeholder.com/300";
                     }}
                   />
 
-                </div>
+                </Link>
 
 
-                {/* PRODUCT INFO */}
+                {/* DETAILS */}
 
-                <div className="product-info">
+                <div className="product-details">
 
-
-                  {/* BRAND */}
-
-                  <p className="product-brand">
-
-                    {product.brand ||
-                      "HOMEKART"}
-
-                  </p>
-
-
-                  {/* NAME */}
-
-                  <h2>
+                  <Link
+                    to={`/products/${product._id}`}
+                    className="product-name"
+                  >
                     {product.name}
-                  </h2>
-
-
-                  {/* DESCRIPTION */}
-
-                  <p className="product-description">
-
-                    {product.description ||
-                      "Quality household product."}
-
-                  </p>
-
-
-                  {/* RATING */}
-
-                  <div className="product-rating">
-
-                    <span>
-                      {product.rating || 0}
-                    </span>
-
-                    <FaStar />
-
-                  </div>
+                  </Link>
 
 
                   {/* PRICE */}
 
                   <div className="product-price">
 
-                    ₹{product.price}
+                    <span className="final-price">
+                      ₹
+                      {finalPrice.toLocaleString(
+                        "en-IN"
+                      )}
+                    </span>
+
+                    {discount > 0 && (
+                      <>
+                        <span className="original-price">
+                          ₹
+                          {price.toLocaleString(
+                            "en-IN"
+                          )}
+                        </span>
+
+                        <span className="discount">
+                          {discount}% OFF
+                        </span>
+                      </>
+                    )}
 
                   </div>
 
 
                   {/* STOCK */}
 
-                  <p className="product-stock">
-
-                    {product.stock > 0
-                      ? `In Stock (${product.stock})`
+                  <div
+                    className={
+                      stock > 0
+                        ? "in-stock"
+                        : "out-of-stock"
+                    }
+                  >
+                    {stock > 0
+                      ? "In Stock"
                       : "Out of Stock"}
-
-                  </p>
+                  </div>
 
 
                   {/* ADD TO CART */}
 
                   <button
-                    className="add-cart-button"
-                    disabled={
-                      product.stock === 0
+                    type="button"
+                    className="add-to-cart-btn"
+                    disabled={stock <= 0}
+                    onClick={() =>
+                      handleAddToCart(product)
                     }
-                    onClick={(event) => {
-
-                      // Prevent product
-                      // details navigation
-                      event.preventDefault();
-
-                      event.stopPropagation();
-
-                      if (
-                        product.stock > 0
-                      ) {
-
-                        addToCart(product);
-
-                      }
-
-                    }}
                   >
-
-                    <FaShoppingCart />
-
-                    {product.stock > 0
+                    {stock > 0
                       ? "Add to Cart"
                       : "Out of Stock"}
-
                   </button>
-
 
                 </div>
 
-              </Link>
+              </div>
 
-            )
-          )}
+            );
+          })}
 
         </div>
 
       )}
 
     </div>
-
   );
-
 }
 
 export default Products;

@@ -1,39 +1,47 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./AdminOrders.css";
 
-function AdminOrders() {
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+const STATUS_OPTIONS = [
+  { value: "PLACED", label: "Placed" },
+  { value: "CONFIRMED", label: "Confirmed" },
+  { value: "PROCESSING", label: "Processing" },
+  { value: "SHIPPED", label: "Shipped" },
+  { value: "DELIVERED", label: "Delivered" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
+function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [updatingId, setUpdatingId] = useState(null);
 
-  const getToken = () => {
-    return (
-      localStorage.getItem("token") ||
-      localStorage.getItem("authToken")
-    );
-  };
+  const token = localStorage.getItem("token");
 
+  // ==========================================
+  // FETCH ORDERS
+  // ==========================================
 
   const fetchOrders = async () => {
-
     try {
-
       setLoading(true);
-      setError("");
-
-      const token = getToken();
 
       const response = await fetch(
-        "http://localhost:5000/api/orders/admin",
+        `${API_URL}/api/orders`,
         {
+          method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
       const data = await response.json();
+
+      console.log("ADMIN ORDERS RESPONSE:", data);
 
       if (!response.ok) {
         throw new Error(
@@ -44,356 +52,542 @@ function AdminOrders() {
       setOrders(
         Array.isArray(data)
           ? data
-          : data.orders || []
+          : Array.isArray(data.orders)
+          ? data.orders
+          : []
       );
-
     } catch (error) {
+      console.error("ADMIN ORDERS ERROR:", error);
 
-      console.error("Orders error:", error);
-
-      setError(error.message);
-
+      alert(
+        error.message || "Unable to fetch orders"
+      );
     } finally {
-
       setLoading(false);
-
     }
-
   };
-
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
-
+  // ==========================================
   // UPDATE STATUS
-  const updateStatus = async (id, status) => {
+  // ==========================================
+
+  const updateOrderStatus = async (
+    orderId,
+    newStatus
+  ) => {
+    if (!orderId || !newStatus) {
+      return;
+    }
 
     try {
+      setUpdatingId(orderId);
 
-      const token = getToken();
+      console.log(
+        "UPDATING ORDER:",
+        orderId,
+        newStatus
+      );
 
       const response = await fetch(
-        `http://localhost:5000/api/orders/${id}/status`,
+        `${API_URL}/api/orders/${orderId}/status`,
         {
           method: "PUT",
 
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
 
           body: JSON.stringify({
-            status
-          })
+            status: newStatus,
+          }),
         }
       );
 
       const data = await response.json();
 
+      console.log(
+        "UPDATE STATUS RESPONSE:",
+        data
+      );
+
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to update order"
+          data.message ||
+            "Failed to update order status"
         );
       }
 
-      setOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order._id === id
+      const updatedOrder =
+        data.order || data;
+
+      setOrders((previousOrders) =>
+        previousOrders.map((order) =>
+          order._id === orderId
             ? {
                 ...order,
-                status
+                ...updatedOrder,
+                orderStatus:
+                  updatedOrder.orderStatus ||
+                  newStatus,
               }
             : order
         )
       );
 
+      alert(
+        `Order status updated to ${formatStatus(
+          newStatus
+        )}`
+      );
     } catch (error) {
-
       console.error(
-        "Update status error:",
+        "UPDATE ORDER STATUS ERROR:",
         error
       );
 
-      alert(error.message);
-
-    }
-
-  };
-
-
-  // DELETE ORDER
-  const deleteOrder = async (id) => {
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this order?"
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-
-      const token = getToken();
-
-      const response = await fetch(
-        `http://localhost:5000/api/orders/${id}`,
-        {
-          method: "DELETE",
-
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+      alert(
+        error.message ||
+          "Unable to update order status"
       );
 
-      const data = await response.json();
+      // Reload orders so UI returns to actual
+      // database status
+      fetchOrders();
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to delete order"
-        );
+  // ==========================================
+  // STATUS FORMAT
+  // ==========================================
+
+  const formatStatus = (status) => {
+    if (!status) {
+      return "Placed";
+    }
+
+    return String(status)
+      .replaceAll("_", " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) =>
+        letter.toUpperCase()
+      );
+  };
+
+  // ==========================================
+  // STATUS CLASS
+  // ==========================================
+
+  const getStatusClass = (status) => {
+    const value = String(
+      status || "PLACED"
+    )
+      .toLowerCase()
+      .replaceAll("_", "-");
+
+    return `order-status ${value}`;
+  };
+
+  // ==========================================
+  // DATE
+  // ==========================================
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "-";
+    }
+
+    return new Date(date).toLocaleString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       }
-
-      setOrders((currentOrders) =>
-        currentOrders.filter(
-          (order) => order._id !== id
-        )
-      );
-
-      alert("Order deleted successfully!");
-
-    } catch (error) {
-
-      console.error(
-        "Delete order error:",
-        error
-      );
-
-      alert(error.message);
-
-    }
-
+    );
   };
 
+  // ==========================================
+  // USER NAME
+  // ==========================================
+
+  const getUserName = (order) => {
+    if (
+      order.user &&
+      typeof order.user === "object"
+    ) {
+      return (
+        order.user.name ||
+        order.user.email ||
+        "Customer"
+      );
+    }
+
+    return "Customer";
+  };
+
+  // ==========================================
+  // USER EMAIL
+  // ==========================================
+
+  const getUserEmail = (order) => {
+    if (
+      order.user &&
+      typeof order.user === "object"
+    ) {
+      return order.user.email || "";
+    }
+
+    return "";
+  };
+
+  // ==========================================
+  // ADDRESS
+  // ==========================================
+
+  const getAddressText = (address) => {
+    if (!address) {
+      return "-";
+    }
+
+    if (typeof address === "string") {
+      return address;
+    }
+
+    return [
+      address.name,
+      address.address,
+      address.street,
+      address.city,
+      address.state,
+      address.pincode,
+      address.zipCode,
+    ]
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
+  if (loading) {
+    return (
+      <div className="admin-orders-page">
+        <div className="admin-orders-loading">
+          Loading orders...
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // PAGE
+  // ==========================================
 
   return (
+    <div className="admin-orders-page">
 
-    <div className="admin-orders">
+      {/* HEADER */}
 
       <div className="admin-orders-header">
 
         <div>
-
           <h1>Manage Orders</h1>
 
           <p>
-            View and manage all HOMEKART customer orders.
+            View and update customer orders.
           </p>
-
         </div>
 
-
         <button
-          className="refresh-orders-btn"
+          type="button"
+          className="admin-orders-refresh"
           onClick={fetchOrders}
         >
-          🔄 Refresh
+          ↻ Refresh
         </button>
 
       </div>
 
+      {/* EMPTY */}
 
-      {loading && (
+      {orders.length === 0 ? (
+        <div className="admin-orders-empty">
 
-        <div className="admin-orders-message">
-          Loading orders...
-        </div>
-
-      )}
-
-
-      {!loading && error && (
-
-        <div className="admin-orders-error">
-
-          <h3>
-            Unable to load orders
-          </h3>
+          <h2>No Orders Found</h2>
 
           <p>
-            {error}
+            Customer orders will appear here
+            after checkout.
           </p>
 
-          <button onClick={fetchOrders}>
-            Try Again
-          </button>
-
         </div>
+      ) : (
 
-      )}
+        <div className="admin-orders-list">
 
+          {orders.map((order) => {
 
-      {!loading &&
-        !error &&
-        orders.length === 0 && (
+            const currentStatus =
+              order.orderStatus || "PLACED";
 
-          <div className="admin-orders-message">
+            return (
+              <div
+                className="admin-order-card"
+                key={order._id}
+              >
 
-            <h3>
-              No orders found
-            </h3>
+                {/* TOP */}
 
-            <p>
-              Customer orders will appear here
-              after an order is placed.
-            </p>
+                <div className="admin-order-top">
 
-          </div>
+                  <div>
 
-      )}
+                    <h2>
+                      Order #
+                      {String(
+                        order._id
+                      ).slice(-8)}
+                    </h2>
 
+                    <p>
+                      {formatDate(
+                        order.createdAt
+                      )}
+                    </p>
 
-      {!loading &&
-        !error &&
-        orders.length > 0 && (
+                  </div>
 
-          <div className="orders-table-container">
+                  <span
+                    className={getStatusClass(
+                      currentStatus
+                    )}
+                  >
+                    {formatStatus(
+                      currentStatus
+                    )}
+                  </span>
 
-            <table className="orders-table">
+                </div>
 
-              <thead>
+                {/* INFORMATION */}
 
-                <tr>
+                <div className="admin-order-info">
 
-                  <th>Order ID</th>
+                  {/* CUSTOMER */}
 
-                  <th>Customer</th>
+                  <div>
 
-                  <th>Email</th>
+                    <h3>
+                      Customer
+                    </h3>
 
-                  <th>Total</th>
+                    <p>
+                      {getUserName(
+                        order
+                      )}
+                    </p>
 
-                  <th>Status</th>
+                    {getUserEmail(
+                      order
+                    ) && (
+                      <p>
+                        {getUserEmail(
+                          order
+                        )}
+                      </p>
+                    )}
 
-                  <th>Date</th>
+                    {order.phone && (
+                      <p>
+                        {order.phone}
+                      </p>
+                    )}
 
-                  <th>Actions</th>
+                  </div>
 
-                </tr>
+                  {/* ADDRESS */}
 
-              </thead>
+                  <div>
 
+                    <h3>
+                      Delivery Address
+                    </h3>
 
-              <tbody>
+                    <p>
+                      {getAddressText(
+                        order.address
+                      )}
+                    </p>
 
-                {orders.map((order) => (
+                  </div>
 
-                  <tr key={order._id}>
+                  {/* PAYMENT */}
 
-                    <td>
-                      #{order._id?.slice(-6)}
-                    </td>
+                  <div>
 
+                    <h3>
+                      Payment
+                    </h3>
 
-                    <td>
-                      {order.user?.name || "Customer"}
-                    </td>
+                    <p>
+                      {order.paymentMethod ||
+                        "COD"}
+                    </p>
 
+                    <p>
+                      Status:{" "}
+                      {order.paymentStatus ||
+                        "PENDING"}
+                    </p>
 
-                    <td>
-                      {order.user?.email || "N/A"}
-                    </td>
+                  </div>
 
+                  {/* TOTAL */}
 
-                    <td>
+                  <div>
+
+                    <h3>
+                      Total
+                    </h3>
+
+                    <strong>
                       ₹
                       {Number(
-                        order.totalAmount || 0
-                      ).toFixed(2)}
-                    </td>
+                        order.totalAmount ||
+                          0
+                      ).toLocaleString(
+                        "en-IN"
+                      )}
+                    </strong>
 
+                  </div>
 
-                    <td>
+                </div>
 
-                      <select
-                        value={
-                          order.status || "Pending"
-                        }
-                        onChange={(e) =>
-                          updateStatus(
-                            order._id,
-                            e.target.value
-                          )
-                        }
-                        className="order-status-select"
-                      >
+                {/* ITEMS */}
 
-                        <option value="Pending">
-                          Pending
+                <div className="admin-order-items">
+
+                  <h3>
+                    Items
+                  </h3>
+
+                  {Array.isArray(
+                    order.items
+                  ) &&
+                    order.items.map(
+                      (item, index) => (
+
+                        <div
+                          className="admin-order-item"
+                          key={
+                            item._id ||
+                            item.product?._id ||
+                            item.product ||
+                            index
+                          }
+                        >
+
+                          <div>
+                            <strong>
+                              {item.name ||
+                                "Product"}
+                            </strong>
+                          </div>
+
+                          <span>
+                            Qty:{" "}
+                            {item.quantity ||
+                              1}
+                          </span>
+
+                          <span>
+                            ₹
+                            {Number(
+                              item.price ||
+                                0
+                            ).toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>
+
+                        </div>
+                      )
+                    )}
+
+                </div>
+
+                {/* STATUS UPDATE */}
+
+                <div className="admin-order-actions">
+
+                  <label>
+                    Update Status
+                  </label>
+
+                  <select
+                    value={currentStatus}
+                    disabled={
+                      updatingId ===
+                      order._id
+                    }
+                    onChange={(event) => {
+                      const newStatus =
+                        event.target.value;
+
+                      updateOrderStatus(
+                        order._id,
+                        newStatus
+                      );
+                    }}
+                  >
+
+                    {STATUS_OPTIONS.map(
+                      (option) => (
+
+                        <option
+                          key={
+                            option.value
+                          }
+                          value={
+                            option.value
+                          }
+                        >
+                          {option.label}
                         </option>
 
-                        <option value="Processing">
-                          Processing
-                        </option>
+                      )
+                    )}
 
-                        <option value="Shipped">
-                          Shipped
-                        </option>
+                  </select>
 
-                        <option value="Delivered">
-                          Delivered
-                        </option>
+                  {updatingId ===
+                    order._id && (
+                    <span>
+                      Updating...
+                    </span>
+                  )}
 
-                        <option value="Cancelled">
-                          Cancelled
-                        </option>
+                </div>
 
-                      </select>
+              </div>
+            );
+          })}
 
-                    </td>
-
-
-                    <td>
-
-                      {order.createdAt
-                        ? new Date(
-                            order.createdAt
-                          ).toLocaleDateString()
-                        : "N/A"}
-
-                    </td>
-
-
-                    <td>
-
-                      <button
-                        className="delete-order-btn"
-                        onClick={() =>
-                          deleteOrder(order._id)
-                        }
-                      >
-                        Delete
-                      </button>
-
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
+        </div>
       )}
 
     </div>
-
   );
 }
 
