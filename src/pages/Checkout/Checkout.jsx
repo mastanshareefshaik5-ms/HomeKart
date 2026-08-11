@@ -7,7 +7,7 @@ import { AuthContext } from "../../context/AuthContext";
 import "./Checkout.css";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}/api/auth/login`;
 
 function Checkout() {
   const { cartItems, clearCart } = useContext(CartContext);

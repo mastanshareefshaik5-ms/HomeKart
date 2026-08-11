@@ -11,7 +11,7 @@ function AdminProducts() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/products"
+        `${import.meta.env.VITE_API_URL}/api/auth/login`
       );
 
       const data = await response.json();
@@ -69,7 +69,7 @@ function AdminProducts() {
         localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/api/products/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         {
           method: "DELETE",
 

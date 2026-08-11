@@ -1,3 +1,4 @@
+
 import { createContext, useEffect, useState } from "react";
 
 export const AuthContext = createContext();
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/login",
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         {
           method: "POST",
           headers: {
@@ -102,8 +103,7 @@ export function AuthProvider({ children }) {
 
       return {
         success: false,
-        message:
-          error.message || "Unable to login",
+        message: error.message || "Unable to login",
       };
     }
   };
@@ -153,3 +153,4 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+

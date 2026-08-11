@@ -4,7 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 import "./Profile.css";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}/api/auth/login`;
 
 function Profile() {
   const { user, setUser } = useContext(AuthContext);
