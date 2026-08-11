@@ -232,13 +232,9 @@ const startServer =
           `HOMEKART Server running on port ${PORT}`
         );
 
-        console.log(
-          `API: http://localhost:${PORT}`
-        );
-
-        console.log(
-          `Payments: http://localhost:${PORT}/api/payment`
-        );
+        console.log(`HOMEKART Server running on port ${PORT}`);
+        console.log(`API server started successfully`);
+        console.log(`Payments API: /api/payment`);
       }
     );
   };
