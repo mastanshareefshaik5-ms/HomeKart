@@ -8,45 +8,41 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  restoreProduct
+  restoreProduct,
 } from "../controllers/productController.js";
 
 import {
   protect,
-  admin
+  admin,
 } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+// ======================================================
+// PUBLIC ROUTES
+// ======================================================
 
-// ==========================================
-// PUBLIC
-// ==========================================
-
-// Get active products
+// Get all active products
+// GET /api/products
 router.get(
   "/",
   getProducts
 );
 
-// Get categories
+// Get product categories
+// GET /api/products/categories
 router.get(
   "/categories",
   getCategories
 );
 
-// Get single product
-router.get(
-  "/:id",
-  getProductById
-);
-
-
-// ==========================================
-// ADMIN
-// ==========================================
+// ======================================================
+// ADMIN ROUTES
+// IMPORTANT: These must come BEFORE /:id
+// ======================================================
 
 // Get all products including inactive
+// GET /api/products/admin/all
 router.get(
   "/admin/all",
   protect,
@@ -55,6 +51,7 @@ router.get(
 );
 
 // Create product
+// POST /api/products
 router.post(
   "/",
   protect,
@@ -62,7 +59,17 @@ router.post(
   createProduct
 );
 
+// Restore deleted/inactive product
+// PUT /api/products/:id/restore
+router.put(
+  "/:id/restore",
+  protect,
+  admin,
+  restoreProduct
+);
+
 // Update product
+// PUT /api/products/:id
 router.put(
   "/:id",
   protect,
@@ -71,6 +78,7 @@ router.put(
 );
 
 // Delete product
+// DELETE /api/products/:id
 router.delete(
   "/:id",
   protect,
@@ -78,13 +86,15 @@ router.delete(
   deleteProduct
 );
 
-// Restore product
-router.put(
-  "/:id/restore",
-  protect,
-  admin,
-  restoreProduct
-);
+// ======================================================
+// PUBLIC SINGLE PRODUCT
+// ======================================================
 
+// Get single product
+// GET /api/products/:id
+router.get(
+  "/:id",
+  getProductById
+);
 
 export default router;
