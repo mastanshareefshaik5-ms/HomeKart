@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import "./AdminProducts.css";
 
 function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:5000";
 
   // ==========================================
   // FETCH PRODUCTS
@@ -18,26 +15,12 @@ function AdminProducts() {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
-
       const response = await fetch(
-        `${API_URL}/api/products`,
-        {
-          method: "GET",
-
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `${import.meta.env.VITE_API_URL}/api/products`
       );
 
-      const data = await response.json();
-
-      console.log(
-        "PRODUCT API STATUS:",
-        response.status
-      );
+      const data =
+        await response.json();
 
       console.log(
         "PRODUCT API DATA:",
@@ -57,13 +40,10 @@ function AdminProducts() {
         Array.isArray(data.products)
       ) {
         setProducts(data.products);
-      } else if (
-        Array.isArray(data.data)
-      ) {
-        setProducts(data.data);
       } else {
         setProducts([]);
       }
+
     } catch (error) {
       console.error(
         "FETCH PRODUCTS ERROR:",
@@ -76,6 +56,7 @@ function AdminProducts() {
       );
 
       setProducts([]);
+
     } finally {
       setLoading(false);
     }
@@ -94,6 +75,7 @@ function AdminProducts() {
   // ==========================================
 
   const deleteProduct = async (id) => {
+
     const confirmDelete =
       window.confirm(
         "Are you sure you want to delete this product?"
@@ -104,18 +86,23 @@ function AdminProducts() {
     }
 
     try {
+
       const token =
         localStorage.getItem("token");
 
+      if (!token) {
+        alert(
+          "Please login as admin."
+        );
+        return;
+      }
+
       const response = await fetch(
-        `${API_URL}/api/products/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/products/${id}`,
         {
           method: "DELETE",
 
           headers: {
-            "Content-Type":
-              "application/json",
-
             Authorization:
               `Bearer ${token}`,
           },
@@ -124,11 +111,6 @@ function AdminProducts() {
 
       const data =
         await response.json();
-
-      console.log(
-        "DELETE PRODUCT RESPONSE:",
-        data
-      );
 
       if (!response.ok) {
         throw new Error(
@@ -148,7 +130,9 @@ function AdminProducts() {
               product._id !== id
           )
       );
+
     } catch (error) {
+
       console.error(
         "DELETE PRODUCT ERROR:",
         error
@@ -162,17 +146,16 @@ function AdminProducts() {
   };
 
   // ==========================================
-  // CALCULATE FINAL PRICE
+  // PRICE
   // ==========================================
 
   const getPrice = (product) => {
+
     if (
-      product.finalPrice !== undefined &&
-      product.finalPrice !== null
+      product.finalPrice !==
+      undefined
     ) {
-      return Number(
-        product.finalPrice
-      );
+      return product.finalPrice;
     }
 
     const price =
@@ -202,13 +185,12 @@ function AdminProducts() {
   return (
     <div className="admin-products-page">
 
-      {/* ==========================================
-          HEADER
-      ========================================== */}
+      {/* HEADER */}
 
       <div className="admin-products-header">
 
         <div>
+
           <h1>
             Manage Products
           </h1>
@@ -217,6 +199,7 @@ function AdminProducts() {
             Manage your HOMEKART
             products.
           </p>
+
         </div>
 
         <div className="admin-products-header-actions">
@@ -225,11 +208,8 @@ function AdminProducts() {
             type="button"
             className="admin-refresh-btn"
             onClick={handleRefresh}
-            disabled={loading}
           >
-            {loading
-              ? "Refreshing..."
-              : "↻ Refresh"}
+            🔄 Refresh
           </button>
 
           <Link
@@ -243,9 +223,7 @@ function AdminProducts() {
 
       </div>
 
-      {/* ==========================================
-          LOADING
-      ========================================== */}
+      {/* LOADING */}
 
       {loading && (
         <div className="admin-products-message">
@@ -253,12 +231,11 @@ function AdminProducts() {
         </div>
       )}
 
-      {/* ==========================================
-          NO PRODUCTS
-      ========================================== */}
+      {/* NO PRODUCTS */}
 
       {!loading &&
         products.length === 0 && (
+
           <div className="admin-products-message">
 
             <h2>
@@ -270,20 +247,11 @@ function AdminProducts() {
               in your database.
             </p>
 
-            <button
-              type="button"
-              className="admin-refresh-btn"
-              onClick={handleRefresh}
-            >
-              ↻ Refresh
-            </button>
-
           </div>
+
         )}
 
-      {/* ==========================================
-          PRODUCTS TABLE
-      ========================================== */}
+      {/* PRODUCTS */}
 
       {!loading &&
         products.length > 0 && (
@@ -349,21 +317,22 @@ function AdminProducts() {
                             "https://via.placeholder.com/70"
                           }
                           alt={
-                            product.name ||
-                            "Product"
+                            product.name
                           }
                           className="admin-product-image"
                           onError={(
                             event
                           ) => {
+
                             event.currentTarget.src =
                               "https://via.placeholder.com/70";
+
                           }}
                         />
 
                       </td>
 
-                      {/* PRODUCT */}
+                      {/* NAME */}
 
                       <td>
 
@@ -401,12 +370,16 @@ function AdminProducts() {
                       <td>
 
                         <strong>
+
                           ₹
-                          {getPrice(
-                            product
+                          {Number(
+                            getPrice(
+                              product
+                            )
                           ).toLocaleString(
                             "en-IN"
                           )}
+
                         </strong>
 
                         {Number(
@@ -457,9 +430,11 @@ function AdminProducts() {
                               : "product-inactive"
                           }
                         >
+
                           {product.isActive
                             ? "Active"
                             : "Inactive"}
+
                         </span>
 
                       </td>

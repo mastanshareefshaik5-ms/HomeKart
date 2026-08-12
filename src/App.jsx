@@ -30,6 +30,7 @@ import AddProduct from "./pages/AddProduct/AddProduct";
 import AdminOrders from "./pages/AdminOrders/AdminOrders";
 import AdminUsers from "./pages/AdminUsers/AdminUsers";
 import AdminReports from "./pages/AdminReports/AdminReports";
+import EditProduct from "./pages/EditProduct/EditProduct";
 
 
 // ======================================================
@@ -174,6 +175,14 @@ function App() {
           path="products"
           element={<AdminProducts />}
         />
+        <Route
+          path="/admin/products/edit/:id"
+          element={
+        <AdminRoute>
+        <EditProduct />
+        </AdminRoute>
+        }
+      />
 
         {/* /admin/products/add */}
         <Route
