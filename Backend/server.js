@@ -19,126 +19,103 @@ const app = express();
 // ENVIRONMENT CHECK
 // ==========================================
 
-console.log(
-  "=========================================="
-);
-
-console.log(
-  "HOMEKART ENVIRONMENT CHECK"
-);
-
-console.log(
-  "=========================================="
-);
+console.log("==========================================");
+console.log("HOMEKART ENVIRONMENT CHECK");
+console.log("==========================================");
 
 console.log(
   "MONGO_URI:",
-  process.env.MONGO_URI
-    ? "Loaded"
-    : "Missing"
+  process.env.MONGO_URI ? "Loaded" : "Missing"
 );
 
 console.log(
   "JWT_SECRET:",
-  process.env.JWT_SECRET
-    ? "Loaded"
-    : "Missing"
+  process.env.JWT_SECRET ? "Loaded" : "Missing"
 );
 
 console.log(
   "RAZORPAY_KEY_ID:",
-  process.env.RAZORPAY_KEY_ID
-    ? "Loaded"
-    : "Missing"
+  process.env.RAZORPAY_KEY_ID ? "Loaded" : "Missing"
 );
 
 console.log(
   "RAZORPAY_KEY_SECRET:",
-  process.env.RAZORPAY_KEY_SECRET
-    ? "Loaded"
-    : "Missing"
+  process.env.RAZORPAY_KEY_SECRET ? "Loaded" : "Missing"
 );
 
 console.log(
   "FRONTEND_URL:",
-  process.env.FRONTEND_URL ||
-    "Missing"
+  process.env.FRONTEND_URL || "Missing"
 );
 
-console.log(
-  "=========================================="
-);
+console.log("==========================================");
 
 // ==========================================
 // CORS
 // ==========================================
 
+// All allowed frontend URLs
 const allowedOrigins = [
+  // Local development
   "http://localhost:5173",
-
   "http://localhost:5174",
 
+  // Main production Vercel URL
   "https://home-kart-vd8y-liard.vercel.app",
 
+  // Previous Vercel deployment
   "https://home-kart-vd8y-g6twb7qy4-mastanshareefshaik5-ms1.vercel.app",
+
+  // CURRENT Vercel deployment
+  "https://home-kart-vd8y-kskd7lfa-mastanshareefshaik5-ms1.vercel.app",
 ];
 
-// Add FRONTEND_URL from Render
-if (process.env.FRONTEND_URL) {
-  const extraOrigins =
-    process.env.FRONTEND_URL
-      .split(",")
-      .map((url) => url.trim())
-      .filter(Boolean);
+// ==========================================
+// ADD FRONTEND_URL FROM RENDER
+// ==========================================
 
-  allowedOrigins.push(
-    ...extraOrigins
-  );
+if (process.env.FRONTEND_URL) {
+  const extraOrigins = process.env.FRONTEND_URL
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+  allowedOrigins.push(...extraOrigins);
 }
 
-console.log(
-  "ALLOWED ORIGINS:"
-);
+// Remove duplicate URLs
+const uniqueAllowedOrigins = [
+  ...new Set(allowedOrigins),
+];
 
-console.log(
-  allowedOrigins
-);
+console.log("ALLOWED ORIGINS:");
+console.log(uniqueAllowedOrigins);
+
+// ==========================================
+// CORS MIDDLEWARE
+// ==========================================
 
 app.use(
   cors({
-    origin: function (
-      origin,
-      callback
-    ) {
-
-      // Allow requests such as Postman
+    origin: function (origin, callback) {
+      // Allow requests without an Origin header
+      // Example: Postman/server-to-server requests
       if (!origin) {
-        return callback(
-          null,
-          true
-        );
+        return callback(null, true);
       }
 
-      if (
-        allowedOrigins.includes(
-          origin
-        )
-      ) {
-        return callback(
-          null,
-          true
-        );
+      // Check whether frontend is allowed
+      if (uniqueAllowedOrigins.includes(origin)) {
+        console.log("CORS ALLOWED:", origin);
+
+        return callback(null, true);
       }
 
-      console.log(
-        "CORS BLOCKED:",
-        origin
-      );
+      // Block unknown frontend
+      console.log("CORS BLOCKED:", origin);
 
       return callback(
-        new Error(
-          "Not allowed by CORS"
-        )
+        new Error("Not allowed by CORS")
       );
     },
 
@@ -164,9 +141,7 @@ app.use(
 // BODY PARSER
 // ==========================================
 
-app.use(
-  express.json()
-);
+app.use(express.json());
 
 app.use(
   express.urlencoded({
@@ -178,49 +153,39 @@ app.use(
 // DATABASE
 // ==========================================
 
-const connectDB =
-  async () => {
+const connectDB = async () => {
+  try {
+    await mongoose.connect(
+      process.env.MONGO_URI
+    );
 
-    try {
+    console.log(
+      "MongoDB connected successfully"
+    );
+  } catch (error) {
+    console.error(
+      "MongoDB Connection Failed:",
+      error.message
+    );
 
-      await mongoose.connect(
-        process.env.MONGO_URI
-      );
-
-      console.log(
-        "MongoDB connected successfully"
-      );
-
-    } catch (error) {
-
-      console.error(
-        "MongoDB Connection Failed:",
-        error.message
-      );
-
-      process.exit(1);
-    }
-  };
-
-// ==========================================
-// HOME
-// ==========================================
-
-app.get(
-  "/",
-  (req, res) => {
-
-    res.status(200).json({
-      success: true,
-      message:
-        "HOMEKART Backend API is running",
-    });
-
+    process.exit(1);
   }
-);
+};
 
 // ==========================================
-// AUTH
+// HOME ROUTE
+// ==========================================
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message:
+      "HOMEKART Backend API is running",
+  });
+});
+
+// ==========================================
+// AUTH ROUTES
 // ==========================================
 
 app.use(
@@ -229,7 +194,7 @@ app.use(
 );
 
 // ==========================================
-// PRODUCTS
+// PRODUCT ROUTES
 // ==========================================
 
 app.use(
@@ -238,7 +203,7 @@ app.use(
 );
 
 // ==========================================
-// ORDERS
+// ORDER ROUTES
 // ==========================================
 
 app.use(
@@ -247,7 +212,7 @@ app.use(
 );
 
 // ==========================================
-// PAYMENT
+// PAYMENT ROUTES
 // ==========================================
 
 app.use(
@@ -256,7 +221,7 @@ app.use(
 );
 
 // ==========================================
-// USERS
+// USER ROUTES
 // ==========================================
 
 app.use(
@@ -265,7 +230,7 @@ app.use(
 );
 
 // ==========================================
-// ADMIN
+// ADMIN ROUTES
 // ==========================================
 
 app.use(
@@ -274,28 +239,24 @@ app.use(
 );
 
 // ==========================================
-// 404
+// 404 ROUTE
 // ==========================================
 
-app.use(
-  (req, res) => {
+app.use((req, res) => {
+  console.log(
+    "404:",
+    req.method,
+    req.originalUrl
+  );
 
-    console.log(
-      "404:",
-      req.method,
-      req.originalUrl
-    );
-
-    res.status(404).json({
-      success: false,
-      message:
-        "API route not found",
-      path:
-        req.originalUrl,
-    });
-
-  }
-);
+  res.status(404).json({
+    success: false,
+    message:
+      "API route not found",
+    path:
+      req.originalUrl,
+  });
+});
 
 // ==========================================
 // ERROR HANDLER
@@ -308,25 +269,24 @@ app.use(
     res,
     next
   ) => {
-
     console.error(
       "SERVER ERROR:",
       error.message
     );
 
+    // CORS error
     if (
       error.message ===
       "Not allowed by CORS"
     ) {
-
       return res.status(403).json({
         success: false,
         message:
           "CORS blocked this request",
       });
-
     }
 
+    // Other errors
     res.status(
       error.status || 500
     ).json({
@@ -335,7 +295,6 @@ app.use(
         error.message ||
         "Internal server error",
     });
-
   }
 );
 
@@ -346,61 +305,64 @@ app.use(
 const PORT =
   process.env.PORT || 5000;
 
-const startServer =
-  async () => {
+const startServer = async () => {
+  try {
+    // Connect MongoDB first
+    await connectDB();
 
-    try {
+    // Start Express server
+    app.listen(
+      PORT,
+      () => {
+        console.log(
+          `HOMEKART Server running on port ${PORT}`
+        );
 
-      await connectDB();
+        console.log(
+          "API server started successfully"
+        );
 
-      app.listen(
-        PORT,
-        () => {
+        console.log(
+          "=========================================="
+        );
 
-          console.log(
-            `HOMEKART Server running on port ${PORT}`
-          );
+        console.log(
+          "Auth API: /api/auth"
+        );
 
-          console.log(
-            "API server started successfully"
-          );
+        console.log(
+          "Products API: /api/products"
+        );
 
-          console.log(
-            "Auth API: /api/auth"
-          );
+        console.log(
+          "Orders API: /api/orders"
+        );
 
-          console.log(
-            "Products API: /api/products"
-          );
+        console.log(
+          "Users API: /api/users"
+        );
 
-          console.log(
-            "Orders API: /api/orders"
-          );
+        console.log(
+          "Admin API: /api/admin"
+        );
 
-          console.log(
-            "Users API: /api/users"
-          );
+        console.log(
+          "Payments API: /api/payment"
+        );
 
-          console.log(
-            "Admin API: /api/admin"
-          );
+        console.log(
+          "=========================================="
+        );
+      }
+    );
+  } catch (error) {
+    console.error(
+      "SERVER START ERROR:",
+      error.message
+    );
 
-          console.log(
-            "Payments API: /api/payment"
-          );
-
-        }
-      );
-
-    } catch (error) {
-
-      console.error(
-        "SERVER START ERROR:",
-        error.message
-      );
-
-      process.exit(1);
-    }
-  };
+    process.exit(1);
+  }
+};
 
 startServer();
