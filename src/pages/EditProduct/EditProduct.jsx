@@ -147,9 +147,9 @@ function EditProduct() {
       }
 
       const response = await fetch(
-       `${import.meta.env.VITE_API_URL}/api/auth/login`,
-        {
-          method: "PUT",
+      `${import.meta.env.VITE_API_URL}/api/products/${id}`,
+      {
+         method: "PUT",
 
           headers: {
             "Content-Type":
