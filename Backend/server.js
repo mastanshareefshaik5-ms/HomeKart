@@ -54,26 +54,16 @@ console.log("==========================================");
 // CORS
 // ==========================================
 
-// All allowed frontend URLs
 const allowedOrigins = [
   // Local development
   "http://localhost:5173",
   "http://localhost:5174",
 
-  // Main production Vercel URL
+  // HOMEKART production
   "https://home-kart-vd8y-liard.vercel.app",
-
-  // Previous Vercel deployment
-  "https://home-kart-vd8y-g6twb7qy4-mastanshareefshaik5-ms1.vercel.app",
-
-  // CURRENT Vercel deployment
-  "https://home-kart-vd8y-kskd7lfa-mastanshareefshaik5-ms1.vercel.app",
 ];
 
-// ==========================================
-// ADD FRONTEND_URL FROM RENDER
-// ==========================================
-
+// Add FRONTEND_URL from Render environment
 if (process.env.FRONTEND_URL) {
   const extraOrigins = process.env.FRONTEND_URL
     .split(",")
@@ -83,35 +73,41 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(...extraOrigins);
 }
 
-// Remove duplicate URLs
-const uniqueAllowedOrigins = [
-  ...new Set(allowedOrigins),
-];
-
 console.log("ALLOWED ORIGINS:");
-console.log(uniqueAllowedOrigins);
+console.log(allowedOrigins);
 
 // ==========================================
-// CORS MIDDLEWARE
+// CORS CONFIGURATION
 // ==========================================
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without an Origin header
-      // Example: Postman/server-to-server requests
+
+      // Allow Postman / server-to-server requests
       if (!origin) {
         return callback(null, true);
       }
 
-      // Check whether frontend is allowed
-      if (uniqueAllowedOrigins.includes(origin)) {
+      // Exact allowed URL
+      if (allowedOrigins.includes(origin)) {
         console.log("CORS ALLOWED:", origin);
-
         return callback(null, true);
       }
 
-      // Block unknown frontend
+      // Allow HOMEKART Vercel preview deployments
+      //
+      // Example:
+      // https://home-kart-vd8y-kskdl7lfa-mastanshareefshaik5-ms1.vercel.app
+      //
+      if (
+        origin.startsWith("https://home-kart-vd8y-") &&
+        origin.endsWith(".vercel.app")
+      ) {
+        console.log("CORS ALLOWED VERCEL PREVIEW:", origin);
+        return callback(null, true);
+      }
+
       console.log("CORS BLOCKED:", origin);
 
       return callback(
@@ -155,6 +151,7 @@ app.use(
 
 const connectDB = async () => {
   try {
+
     await mongoose.connect(
       process.env.MONGO_URI
     );
@@ -162,7 +159,9 @@ const connectDB = async () => {
     console.log(
       "MongoDB connected successfully"
     );
+
   } catch (error) {
+
     console.error(
       "MongoDB Connection Failed:",
       error.message
@@ -173,15 +172,17 @@ const connectDB = async () => {
 };
 
 // ==========================================
-// HOME ROUTE
+// HOME
 // ==========================================
 
 app.get("/", (req, res) => {
+
   res.status(200).json({
     success: true,
     message:
       "HOMEKART Backend API is running",
   });
+
 });
 
 // ==========================================
@@ -239,10 +240,11 @@ app.use(
 );
 
 // ==========================================
-// 404 ROUTE
+// 404 HANDLER
 // ==========================================
 
 app.use((req, res) => {
+
   console.log(
     "404:",
     req.method,
@@ -256,6 +258,7 @@ app.use((req, res) => {
     path:
       req.originalUrl,
   });
+
 });
 
 // ==========================================
@@ -263,30 +266,26 @@ app.use((req, res) => {
 // ==========================================
 
 app.use(
-  (
-    error,
-    req,
-    res,
-    next
-  ) => {
+  (error, req, res, next) => {
+
     console.error(
       "SERVER ERROR:",
       error.message
     );
 
-    // CORS error
     if (
       error.message ===
       "Not allowed by CORS"
     ) {
+
       return res.status(403).json({
         success: false,
         message:
           "CORS blocked this request",
       });
+
     }
 
-    // Other errors
     res.status(
       error.status || 500
     ).json({
@@ -295,6 +294,7 @@ app.use(
         error.message ||
         "Internal server error",
     });
+
   }
 );
 
@@ -306,24 +306,21 @@ const PORT =
   process.env.PORT || 5000;
 
 const startServer = async () => {
+
   try {
-    // Connect MongoDB first
+
     await connectDB();
 
-    // Start Express server
     app.listen(
       PORT,
       () => {
+
         console.log(
           `HOMEKART Server running on port ${PORT}`
         );
 
         console.log(
           "API server started successfully"
-        );
-
-        console.log(
-          "=========================================="
         );
 
         console.log(
@@ -350,12 +347,11 @@ const startServer = async () => {
           "Payments API: /api/payment"
         );
 
-        console.log(
-          "=========================================="
-        );
       }
     );
+
   } catch (error) {
+
     console.error(
       "SERVER START ERROR:",
       error.message
