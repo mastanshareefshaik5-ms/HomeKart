@@ -2,21 +2,38 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./AdminProducts.css";
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://homekart-backend.onrender.com";
+
 function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ==========================================
+  // FETCH PRODUCTS
+  // ==========================================
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
 
+      const token = localStorage.getItem("token");
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`
+        `${API_URL}/api/products`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const data = await response.json();
 
-      console.log("PRODUCT API DATA:", data);
+      console.log("PRODUCT API RESPONSE:", data);
 
       if (!response.ok) {
         throw new Error(
@@ -24,15 +41,16 @@ function AdminProducts() {
         );
       }
 
-      // Your API returns an ARRAY directly
+      // Handle different backend response formats
       if (Array.isArray(data)) {
         setProducts(data);
       } else if (Array.isArray(data.products)) {
         setProducts(data.products);
+      } else if (Array.isArray(data.data)) {
+        setProducts(data.data);
       } else {
         setProducts([]);
       }
-
     } catch (error) {
       console.error(
         "FETCH PRODUCTS ERROR:",
@@ -45,15 +63,22 @@ function AdminProducts() {
       );
 
       setProducts([]);
-
     } finally {
       setLoading(false);
     }
   };
 
+  // ==========================================
+  // LOAD PRODUCTS
+  // ==========================================
+
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // ==========================================
+  // DELETE PRODUCT
+  // ==========================================
 
   const deleteProduct = async (id) => {
     const confirmDelete = window.confirm(
@@ -69,19 +94,24 @@ function AdminProducts() {
         localStorage.getItem("token");
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        `${API_URL}/api/products/${id}`,
         {
           method: "DELETE",
 
           headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       const data =
         await response.json();
+
+      console.log(
+        "DELETE PRODUCT RESPONSE:",
+        data
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -94,14 +124,13 @@ function AdminProducts() {
         "Product deleted successfully!"
       );
 
-      // Remove deleted product immediately
-      setProducts((previousProducts) =>
-        previousProducts.filter(
-          (product) =>
-            product._id !== id
-        )
+      setProducts(
+        (previousProducts) =>
+          previousProducts.filter(
+            (product) =>
+              product._id !== id
+          )
       );
-
     } catch (error) {
       console.error(
         "DELETE PRODUCT ERROR:",
@@ -115,11 +144,16 @@ function AdminProducts() {
     }
   };
 
+  // ==========================================
+  // FINAL PRICE
+  // ==========================================
+
   const getPrice = (product) => {
     if (
-      product.finalPrice !== undefined
+      product.finalPrice !== undefined &&
+      product.finalPrice !== null
     ) {
-      return product.finalPrice;
+      return Number(product.finalPrice);
     }
 
     const price =
@@ -134,6 +168,10 @@ function AdminProducts() {
     );
   };
 
+  // ==========================================
+  // RENDER
+  // ==========================================
+
   return (
     <div className="admin-products-page">
 
@@ -147,8 +185,7 @@ function AdminProducts() {
           </h1>
 
           <p>
-            Manage your HOMEKART
-            products.
+            Manage your HOMEKART products.
           </p>
         </div>
 
@@ -161,6 +198,21 @@ function AdminProducts() {
 
       </div>
 
+      {/* REFRESH */}
+
+      <div className="admin-products-refresh">
+
+        <button
+          type="button"
+          onClick={fetchProducts}
+          disabled={loading}
+        >
+          🔄 {loading
+            ? "Loading..."
+            : "Refresh Products"}
+        </button>
+
+      </div>
 
       {/* LOADING */}
 
@@ -169,7 +221,6 @@ function AdminProducts() {
           Loading products...
         </div>
       )}
-
 
       {/* NO PRODUCTS */}
 
@@ -189,7 +240,6 @@ function AdminProducts() {
           </div>
         )}
 
-
       {/* PRODUCTS */}
 
       {!loading &&
@@ -200,6 +250,7 @@ function AdminProducts() {
             <table className="admin-products-table">
 
               <thead>
+
                 <tr>
 
                   <th>
@@ -231,8 +282,8 @@ function AdminProducts() {
                   </th>
 
                 </tr>
-              </thead>
 
+              </thead>
 
               <tbody>
 
@@ -240,9 +291,7 @@ function AdminProducts() {
                   (product) => (
 
                     <tr
-                      key={
-                        product._id
-                      }
+                      key={product._id}
                     >
 
                       {/* IMAGE */}
@@ -255,7 +304,8 @@ function AdminProducts() {
                             "https://via.placeholder.com/70"
                           }
                           alt={
-                            product.name
+                            product.name ||
+                            "Product"
                           }
                           className="admin-product-image"
                           onError={(
@@ -268,7 +318,6 @@ function AdminProducts() {
 
                       </td>
 
-
                       {/* NAME */}
 
                       <td>
@@ -276,33 +325,25 @@ function AdminProducts() {
                         <div className="admin-product-name">
 
                           <strong>
-                            {
-                              product.name
-                            }
+                            {product.name}
                           </strong>
 
                           <small>
                             SKU:{" "}
-                            {
-                              product.sku ||
-                              "N/A"
-                            }
+                            {product.sku ||
+                              "N/A"}
                           </small>
 
                         </div>
 
                       </td>
 
-
                       {/* CATEGORY */}
 
                       <td>
-                        {
-                          product.category ||
-                          "N/A"
-                        }
+                        {product.category ||
+                          "N/A"}
                       </td>
-
 
                       {/* PRICE */}
 
@@ -310,10 +351,8 @@ function AdminProducts() {
 
                         <strong>
                           ₹
-                          {Number(
-                            getPrice(
-                              product
-                            )
+                          {getPrice(
+                            product
                           ).toLocaleString(
                             "en-IN"
                           )}
@@ -322,16 +361,19 @@ function AdminProducts() {
                         {Number(
                           product.discount
                         ) > 0 && (
+
                           <small className="admin-discount">
+
                             {
                               product.discount
                             }
                             % OFF
+
                           </small>
+
                         )}
 
                       </td>
-
 
                       {/* STOCK */}
 
@@ -353,7 +395,6 @@ function AdminProducts() {
 
                       </td>
 
-
                       {/* STATUS */}
 
                       <td>
@@ -371,7 +412,6 @@ function AdminProducts() {
                         </span>
 
                       </td>
-
 
                       {/* ACTIONS */}
 
