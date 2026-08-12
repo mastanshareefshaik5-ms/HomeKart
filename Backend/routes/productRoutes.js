@@ -18,31 +18,22 @@ import {
 
 const router = express.Router();
 
-// ======================================================
+// ==========================================
 // PUBLIC ROUTES
-// ======================================================
+// ==========================================
 
-// Get all active products
-// GET /api/products
-router.get(
-  "/",
-  getProducts
-);
+// Get active products
+router.get("/", getProducts);
 
-// Get product categories
-// GET /api/products/categories
-router.get(
-  "/categories",
-  getCategories
-);
+// Get categories
+router.get("/categories", getCategories);
 
-// ======================================================
+// ==========================================
 // ADMIN ROUTES
 // IMPORTANT: These must come BEFORE /:id
-// ======================================================
+// ==========================================
 
 // Get all products including inactive
-// GET /api/products/admin/all
 router.get(
   "/admin/all",
   protect,
@@ -51,7 +42,6 @@ router.get(
 );
 
 // Create product
-// POST /api/products
 router.post(
   "/",
   protect,
@@ -59,17 +49,7 @@ router.post(
   createProduct
 );
 
-// Restore deleted/inactive product
-// PUT /api/products/:id/restore
-router.put(
-  "/:id/restore",
-  protect,
-  admin,
-  restoreProduct
-);
-
 // Update product
-// PUT /api/products/:id
 router.put(
   "/:id",
   protect,
@@ -78,7 +58,6 @@ router.put(
 );
 
 // Delete product
-// DELETE /api/products/:id
 router.delete(
   "/:id",
   protect,
@@ -86,12 +65,18 @@ router.delete(
   deleteProduct
 );
 
-// ======================================================
-// PUBLIC SINGLE PRODUCT
-// ======================================================
+// Restore product
+router.put(
+  "/:id/restore",
+  protect,
+  admin,
+  restoreProduct
+);
 
-// Get single product
-// GET /api/products/:id
+// ==========================================
+// SINGLE PRODUCT
+// ==========================================
+
 router.get(
   "/:id",
   getProductById

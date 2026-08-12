@@ -59,11 +59,11 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
 
-  // HOMEKART production
+  // Main HOMEKART Vercel deployment
   "https://home-kart-vd8y-liard.vercel.app",
 ];
 
-// Add FRONTEND_URL from Render environment
+// Add Render FRONTEND_URL
 if (process.env.FRONTEND_URL) {
   const extraOrigins = process.env.FRONTEND_URL
     .split(",")
@@ -83,28 +83,28 @@ console.log(allowedOrigins);
 app.use(
   cors({
     origin: function (origin, callback) {
-
-      // Allow Postman / server-to-server requests
+      // Allow requests without an Origin
+      // Example: Postman/server-to-server
       if (!origin) {
         return callback(null, true);
       }
 
-      // Exact allowed URL
+      // Exact allowed origins
       if (allowedOrigins.includes(origin)) {
         console.log("CORS ALLOWED:", origin);
         return callback(null, true);
       }
 
-      // Allow HOMEKART Vercel preview deployments
-      //
-      // Example:
-      // https://home-kart-vd8y-kskdl7lfa-mastanshareefshaik5-ms1.vercel.app
-      //
+      // Allow Vercel preview deployments
       if (
-        origin.startsWith("https://home-kart-vd8y-") &&
+        origin.startsWith("https://home-kart-") &&
         origin.endsWith(".vercel.app")
       ) {
-        console.log("CORS ALLOWED VERCEL PREVIEW:", origin);
+        console.log(
+          "CORS ALLOWED VERCEL PREVIEW:",
+          origin
+        );
+
         return callback(null, true);
       }
 
@@ -151,17 +151,12 @@ app.use(
 
 const connectDB = async () => {
   try {
-
-    await mongoose.connect(
-      process.env.MONGO_URI
-    );
+    await mongoose.connect(process.env.MONGO_URI);
 
     console.log(
       "MongoDB connected successfully"
     );
-
   } catch (error) {
-
     console.error(
       "MongoDB Connection Failed:",
       error.message
@@ -172,17 +167,15 @@ const connectDB = async () => {
 };
 
 // ==========================================
-// HOME
+// HOME ROUTE
 // ==========================================
 
 app.get("/", (req, res) => {
-
   res.status(200).json({
     success: true,
     message:
       "HOMEKART Backend API is running",
   });
-
 });
 
 // ==========================================
@@ -244,7 +237,6 @@ app.use(
 // ==========================================
 
 app.use((req, res) => {
-
   console.log(
     "404:",
     req.method,
@@ -253,12 +245,9 @@ app.use((req, res) => {
 
   res.status(404).json({
     success: false,
-    message:
-      "API route not found",
-    path:
-      req.originalUrl,
+    message: "API route not found",
+    path: req.originalUrl,
   });
-
 });
 
 // ==========================================
@@ -267,7 +256,6 @@ app.use((req, res) => {
 
 app.use(
   (error, req, res, next) => {
-
     console.error(
       "SERVER ERROR:",
       error.message
@@ -277,13 +265,11 @@ app.use(
       error.message ===
       "Not allowed by CORS"
     ) {
-
       return res.status(403).json({
         success: false,
         message:
           "CORS blocked this request",
       });
-
     }
 
     res.status(
@@ -294,7 +280,6 @@ app.use(
         error.message ||
         "Internal server error",
     });
-
   }
 );
 
@@ -306,52 +291,43 @@ const PORT =
   process.env.PORT || 5000;
 
 const startServer = async () => {
-
   try {
-
     await connectDB();
 
-    app.listen(
-      PORT,
-      () => {
+    app.listen(PORT, () => {
+      console.log(
+        `HOMEKART Server running on port ${PORT}`
+      );
 
-        console.log(
-          `HOMEKART Server running on port ${PORT}`
-        );
+      console.log(
+        "API server started successfully"
+      );
 
-        console.log(
-          "API server started successfully"
-        );
+      console.log(
+        "Auth API: /api/auth"
+      );
 
-        console.log(
-          "Auth API: /api/auth"
-        );
+      console.log(
+        "Products API: /api/products"
+      );
 
-        console.log(
-          "Products API: /api/products"
-        );
+      console.log(
+        "Orders API: /api/orders"
+      );
 
-        console.log(
-          "Orders API: /api/orders"
-        );
+      console.log(
+        "Users API: /api/users"
+      );
 
-        console.log(
-          "Users API: /api/users"
-        );
+      console.log(
+        "Admin API: /api/admin"
+      );
 
-        console.log(
-          "Admin API: /api/admin"
-        );
-
-        console.log(
-          "Payments API: /api/payment"
-        );
-
-      }
-    );
-
+      console.log(
+        "Payments API: /api/payment"
+      );
+    });
   } catch (error) {
-
     console.error(
       "SERVER START ERROR:",
       error.message
